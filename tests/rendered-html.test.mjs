@@ -1,11 +1,8 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
+const projectRoot = new URL("../", import.meta.url);
 
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -28,64 +25,54 @@ async function render() {
   );
 }
 
-test("server-renders the starter loading skeleton", async () => {
+test("server-renders the Grow Ledger dashboard", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
-    html,
-    /Your first version will appear here automatically when it’s ready\./,
-  );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
+  assert.match(html, /<title>Grow Ledger<\/title>/i);
+  assert.match(html, /Vegetable farming management/);
+  assert.match(html, /Total investment/);
+  assert.match(html, /Sales received/);
+  assert.match(html, /Expenses paid/);
+  assert.match(html, /Current profit/);
+  assert.match(html, /Partners and profit share/);
+  assert.match(html, /Anish/);
+  assert.match(html, /Anoup/);
+  assert.match(html, /Shivam/);
+  assert.match(html, /Inben/);
+  assert.match(html, /Land 1/);
+  assert.match(html, /Land 2/);
+  assert.match(html, /Add expense/);
+  assert.match(html, /Add sale/);
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
+test("removes starter preview code and documents Render deployment", async () => {
+  const [page, layout, packageJson, readme, renderConfig] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+    readFile(new URL("../render.yaml", import.meta.url), "utf8"),
   ]);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
-
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
-
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
+  assert.match(page, /Grow Ledger/);
+  assert.match(page, /splitMode/);
+  assert.match(page, /localStorage/);
+  assert.match(layout, /title:\s*"Grow Ledger"/);
+  assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
+  assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(readme, /Deploy on Render/);
+  assert.match(renderConfig, /type:\s*web/);
+  assert.match(renderConfig, /runtime:\s*node/);
+  assert.match(renderConfig, /buildCommand:\s*npm ci && npm run build/);
+  assert.match(renderConfig, /startCommand:\s*npm run start/);
 
   await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
+    access(new URL("app/_sites-preview/SkeletonPreview.tsx", projectRoot)),
+  );
+  await assert.rejects(
+    access(new URL("app/_sites-preview/preview.css", projectRoot)),
   );
 });

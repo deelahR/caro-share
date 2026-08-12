@@ -1,8 +1,8 @@
-# vinext-starter
+# Grow Ledger
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+A vegetable farming business dashboard for tracking two land plots, partner
+investments, crop activity, expenses, sales, and profit sharing for Anish,
+Anoup, Shivam, and Inben.
 
 ## Prerequisites
 
@@ -15,6 +15,21 @@ npm install
 npm run dev
 npm run build
 ```
+
+## Deploy on Render
+
+This project includes `render.yaml` for Render Blueprints.
+
+1. Push this project to GitHub or GitLab.
+2. In Render, create a new Blueprint from the repository.
+3. Render will use:
+   - Build command: `npm ci && npm run build`
+   - Start command: `npm run start`
+   - Node.js `>=22.13.0`
+
+The app currently stores records in the browser on each device. To share live
+records between all four owners, add a hosted database before relying on it for
+daily operations.
 
 This starter does not use `wrangler.jsonc`.
 
