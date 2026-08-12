@@ -23,7 +23,7 @@ This project includes `render.yaml` for Render Blueprints.
 1. Push this project to GitHub or GitLab.
 2. In Render, create a new Blueprint from the repository.
 3. Render will use:
-   - Build command: `npm ci && npm run build`
+   - Build command: `npm ci --include=dev && npm run build`
    - Start command: `npm run start`
    - Node.js `>=22.13.0`
 

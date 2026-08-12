@@ -66,7 +66,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(readme, /Deploy on Render/);
   assert.match(renderConfig, /type:\s*web/);
   assert.match(renderConfig, /runtime:\s*node/);
-  assert.match(renderConfig, /buildCommand:\s*npm ci && npm run build/);
+  assert.match(renderConfig, /buildCommand:\s*npm ci --include=dev && npm run build/);
   assert.match(renderConfig, /startCommand:\s*npm run start/);
 
   await assert.rejects(
