@@ -32,9 +32,11 @@ test("server-renders the owner login gate", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Grow Ledger<\/title>/i);
-  assert.match(html, /Owner access/);
+  assert.match(html, /Private owner portal/);
+  assert.match(html, /Owner login/);
   assert.match(html, /Choose owner/);
-  assert.match(html, /Prototype PINs/);
+  assert.match(html, /Temporary owner PINs/);
+  assert.match(html, /Only signed-in owners can open the dashboard/);
   assert.match(html, /Anish/);
   assert.match(html, /Anoup/);
   assert.match(html, /Shivam/);

@@ -239,14 +239,20 @@ export default function Home() {
       <main className="login-shell">
         <section className="login-panel" aria-label="Owner login">
           <div>
-            <p className="eyebrow">Owner access</p>
+            <p className="eyebrow">Private owner portal</p>
             <h1>Grow Ledger</h1>
             <p className="intro">
               Sign in as one of the four owners to view and update the farm
               business records.
             </p>
+            <ul className="login-benefits" aria-label="Owner portal features">
+              <li>Only signed-in owners can open the dashboard.</li>
+              <li>The current owner is shown on every session.</li>
+              <li>Use logout before another owner uses the same device.</li>
+            </ul>
           </div>
           <form className="login-form" onSubmit={loginOwner}>
+            <h2>Owner login</h2>
             <label>
               Owner
               <select name="owner" defaultValue="" required>
@@ -274,8 +280,8 @@ export default function Home() {
             {loginError && <p className="form-error">{loginError}</p>}
             <button type="submit">Log in</button>
           </form>
-          <div className="pin-list" aria-label="Prototype PINs">
-            <strong>Prototype PINs</strong>
+          <div className="pin-list" aria-label="Temporary owner PINs">
+            <strong>Temporary owner PINs</strong>
             <span>Anish 1111</span>
             <span>Anoup 2222</span>
             <span>Shivam 3333</span>
@@ -322,6 +328,17 @@ export default function Home() {
             </button>
           </div>
         </div>
+      </section>
+
+      <section className="session-strip" aria-label="Owner session">
+        <div>
+          <span>Owner workspace</span>
+          <strong>{activeOwner}</strong>
+        </div>
+        <p>
+          Changes entered here are saved on this device for the signed-in owner
+          session.
+        </p>
       </section>
 
       <section className="metrics" aria-label="Financial totals">
