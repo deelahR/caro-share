@@ -46,6 +46,9 @@ test("server-renders the Grow Ledger dashboard", async () => {
   assert.match(html, /Land 2/);
   assert.match(html, /Add expense/);
   assert.match(html, /Add sale/);
+  assert.match(html, /Rs\s*0/);
+  assert.match(html, /No records yet\./);
+  assert.doesNotMatch(html, /Tomato early batch|Leafy greens|Seeds and trays/);
 });
 
 test("removes starter preview code and documents Render deployment", async () => {
@@ -59,7 +62,8 @@ test("removes starter preview code and documents Render deployment", async () =>
 
   assert.match(page, /Grow Ledger/);
   assert.match(page, /splitMode/);
-  assert.match(page, /localStorage/);
+  assert.match(page, /farmledger-data-v2/);
+  assert.doesNotMatch(page, /Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/);
   assert.match(layout, /title:\s*"Grow Ledger"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);

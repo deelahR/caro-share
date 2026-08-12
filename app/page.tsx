@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
@@ -44,73 +44,34 @@ const currency = new Intl.NumberFormat("en-MU", {
 
 const startingData: AppData = {
   partners: [
-    { name: "Anish", investment: 25000 },
-    { name: "Anoup", investment: 25000 },
-    { name: "Shivam", investment: 25000 },
-    { name: "Inben", investment: 25000 },
+    { name: "Anish", investment: 0 },
+    { name: "Anoup", investment: 0 },
+    { name: "Shivam", investment: 0 },
+    { name: "Inben", investment: 0 },
   ],
   lands: [
     {
       name: "Land 1",
-      area: "North plot",
-      crop: "Tomato",
-      status: "Growing",
-      planted: "2026-08-01",
-      harvest: "2026-10-10",
+      area: "",
+      crop: "",
+      status: "",
+      planted: "",
+      harvest: "",
     },
     {
       name: "Land 2",
-      area: "South plot",
-      crop: "Cabbage",
-      status: "Preparing",
-      planted: "2026-08-18",
-      harvest: "2026-11-05",
+      area: "",
+      crop: "",
+      status: "",
+      planted: "",
+      harvest: "",
     },
   ],
-  expenses: [
-    {
-      id: 1,
-      date: "2026-08-02",
-      label: "Seeds and trays",
-      category: "Seeds",
-      amount: 7200,
-    },
-    {
-      id: 2,
-      date: "2026-08-04",
-      label: "Organic fertilizer",
-      category: "Fertilizer",
-      amount: 9600,
-    },
-    {
-      id: 3,
-      date: "2026-08-06",
-      label: "Field preparation labor",
-      category: "Labor",
-      amount: 12000,
-    },
-  ],
-  sales: [
-    {
-      id: 1,
-      date: "2026-08-20",
-      label: "Tomato early batch",
-      category: "Tomato",
-      quantity: "80 kg",
-      buyer: "Local market",
-      amount: 11200,
-    },
-    {
-      id: 2,
-      date: "2026-08-23",
-      label: "Leafy greens",
-      category: "Greens",
-      quantity: "45 bundles",
-      buyer: "Restaurant",
-      amount: 6750,
-    },
-  ],
+  expenses: [],
+  sales: [],
 };
+
+const storageKey = "farmledger-data-v2";
 
 function readNumber(form: FormData, key: string) {
   return Number(form.get(key) || 0);
@@ -125,14 +86,14 @@ export default function Home() {
   const [splitMode, setSplitMode] = useState<"equal" | "investment">("equal");
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("farmledger-data");
+    const saved = window.localStorage.getItem(storageKey);
     if (saved) {
       setData(JSON.parse(saved) as AppData);
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("farmledger-data", JSON.stringify(data));
+    window.localStorage.setItem(storageKey, JSON.stringify(data));
   }, [data]);
 
   const totals = useMemo(() => {
@@ -408,7 +369,7 @@ function RecordPanel({
       <div className="form-grid">
         <label>
           Date
-          <input name="date" type="date" defaultValue="2026-08-12" />
+          <input name="date" type="date" />
         </label>
         <label>
           {isSale ? "Vegetable" : "Category"}
@@ -455,19 +416,26 @@ function Records({
         <h2>{title}</h2>
       </div>
       <div className="records">
-        {records.map((record) => (
-          <article className="record" key={record.id}>
-            <div>
-              <strong>{record.label}</strong>
-              <small>
-                {record.date} · {record.category}
-                {isSale && "quantity" in record ? ` · ${record.quantity} · ${record.buyer}` : ""}
-              </small>
-            </div>
-            <span>{currency.format(record.amount)}</span>
-          </article>
-        ))}
+        {records.length === 0 ? (
+          <p className="empty-state">No records yet.</p>
+        ) : (
+          records.map((record) => (
+            <article className="record" key={record.id}>
+              <div>
+                <strong>{record.label}</strong>
+                <small>
+                  {record.date || "No date"} - {record.category}
+                  {isSale && "quantity" in record
+                    ? ` - ${record.quantity || "No quantity"} - ${record.buyer}`
+                    : ""}
+                </small>
+              </div>
+              <span>{currency.format(record.amount)}</span>
+            </article>
+          ))
+        )}
       </div>
     </div>
   );
 }
+
