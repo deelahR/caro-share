@@ -71,12 +71,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(packageJson, /"pg"/);
   assert.match(readme, /Deploy on Render/);
-  assert.match(readme, /PostgreSQL database named `agribro-db`/);
+  assert.match(readme, /`DATABASE_URL` environment/);
   assert.match(renderConfig, /type:\s*web/);
   assert.match(renderConfig, /runtime:\s*node/);
   assert.match(renderConfig, /DATABASE_URL/);
-  assert.match(renderConfig, /fromDatabase/);
-  assert.match(renderConfig, /name:\s*agribro-db/);
+  assert.match(renderConfig, /sync:\s*false/);
   assert.match(renderConfig, /buildCommand:\s*npm ci --include=dev && npm run build/);
   assert.match(renderConfig, /startCommand:\s*npm run start/);
 
