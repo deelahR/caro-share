@@ -14,7 +14,7 @@ const owners: Owner[] = [
   { name: "Inben", pin: "4444" },
 ];
 
-const ownerSessionKey = "grow-ledger-owner-session";
+const ownerSessionKey = "agribro-owner-session";
 
 function readText(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
@@ -62,7 +62,7 @@ export default function Home() {
         <section className="start-panel" aria-label="Owner start screen">
           <div>
             <p className="eyebrow">Owner workspace</p>
-            <h1>Grow Ledger</h1>
+            <h1>AgriBro</h1>
             <p className="intro">
               Signed in as {activeOwner}. The business app is ready to be built
               from the start.
@@ -81,7 +81,7 @@ export default function Home() {
       <section className="login-panel" aria-label="Owner login">
         <div>
           <p className="eyebrow">Private owner portal</p>
-          <h1>Grow Ledger</h1>
+          <h1>AgriBro</h1>
           <p className="intro">
             Sign in as one of the owners. We will build the rest of the
             business system from here.

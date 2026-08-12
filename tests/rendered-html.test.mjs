@@ -31,7 +31,7 @@ test("server-renders the owner login gate", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Grow Ledger<\/title>/i);
+  assert.match(html, /<title>AgriBro<\/title>/i);
   assert.match(html, /Private owner portal/);
   assert.match(html, /Owner login/);
   assert.match(html, /Choose owner/);
@@ -56,7 +56,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     readFile(new URL("../render.yaml", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /Grow Ledger/);
+  assert.match(page, /AgriBro/);
   assert.match(page, /ownerSessionKey/);
   assert.match(page, /loginOwner/);
   assert.match(page, /logoutOwner/);
@@ -64,7 +64,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     page,
     /splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
   );
-  assert.match(layout, /title:\s*"Grow Ledger"/);
+  assert.match(layout, /title:\s*"AgriBro"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(readme, /Deploy on Render/);

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Grow Ledger",
+  title: "AgriBro",
   description:
     "A small vegetable farming business dashboard for tracking land, investment, sales, expenses, and profit sharing.",
   icons: {

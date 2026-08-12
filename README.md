@@ -1,4 +1,4 @@
-# Grow Ledger
+# AgriBro
 
 A vegetable farming business dashboard for tracking two land plots, partner
 investments, crop activity, expenses, sales, and profit sharing for Anish,
