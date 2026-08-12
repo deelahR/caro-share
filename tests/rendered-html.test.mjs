@@ -25,30 +25,22 @@ async function render() {
   );
 }
 
-test("server-renders the Grow Ledger dashboard", async () => {
+test("server-renders the owner login gate", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
   assert.match(html, /<title>Grow Ledger<\/title>/i);
-  assert.match(html, /Vegetable farming management/);
-  assert.match(html, /Total investment/);
-  assert.match(html, /Sales received/);
-  assert.match(html, /Expenses paid/);
-  assert.match(html, /Current profit/);
-  assert.match(html, /Partners and profit share/);
+  assert.match(html, /Owner access/);
+  assert.match(html, /Choose owner/);
+  assert.match(html, /Prototype PINs/);
   assert.match(html, /Anish/);
   assert.match(html, /Anoup/);
   assert.match(html, /Shivam/);
   assert.match(html, /Inben/);
-  assert.match(html, /Land 1/);
-  assert.match(html, /Land 2/);
-  assert.match(html, /Add expense/);
-  assert.match(html, /Add sale/);
-  assert.match(html, /Rs\s*0/);
-  assert.match(html, /No records yet\./);
-  assert.doesNotMatch(html, /Tomato early batch|Leafy greens|Seeds and trays/);
+  assert.match(html, /1111/);
+  assert.doesNotMatch(html, /Total investment|Add expense|Tomato early batch|Seeds and trays/);
 });
 
 test("removes starter preview code and documents Render deployment", async () => {
@@ -63,6 +55,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Grow Ledger/);
   assert.match(page, /splitMode/);
   assert.match(page, /farmledger-data-v2/);
+  assert.match(page, /ownerSessionKey/);
+  assert.match(page, /loginOwner/);
+  assert.match(page, /logoutOwner/);
   assert.doesNotMatch(page, /Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/);
   assert.match(layout, /title:\s*"Grow Ledger"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);

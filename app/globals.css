@@ -42,7 +42,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -60,7 +61,8 @@ button:hover {
   background: var(--green);
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 42px;
   border: 1px solid var(--line);
@@ -83,6 +85,64 @@ label {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 28px 0 48px;
+}
+
+.login-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.7fr);
+  gap: 28px;
+  width: min(920px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 20px 50px rgba(55, 45, 28, 0.12);
+  padding: 28px;
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.login-form button {
+  width: 130px;
+}
+
+.form-error {
+  margin: 0;
+  color: var(--red);
+  font-weight: 800;
+}
+
+.pin-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding-top: 16px;
+}
+
+.pin-list strong {
+  color: var(--ink);
+}
+
+.pin-list span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fbf7ec;
+  padding: 6px 10px;
 }
 
 .topbar {
@@ -141,6 +201,44 @@ h2 {
   border-radius: 8px;
   overflow: hidden;
   background: var(--panel);
+}
+
+.owner-tools {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.owner-badge {
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 9px 12px;
+}
+
+.owner-badge span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.owner-badge strong {
+  color: var(--green-dark);
+}
+
+.logout-button {
+  min-width: 110px;
+  border: 1px solid var(--green-dark);
+  background: transparent;
+  color: var(--green-dark);
+}
+
+.logout-button:hover {
+  background: #eef6ec;
 }
 
 .mode-switch button {
@@ -358,8 +456,13 @@ h2 {
 @media (max-width: 920px) {
   .topbar,
   .layout-grid,
-  .forms-grid {
+  .forms-grid,
+  .login-panel {
     grid-template-columns: 1fr;
+  }
+
+  .owner-tools {
+    justify-items: stretch;
   }
 
   .metrics {

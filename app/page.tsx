@@ -36,11 +36,23 @@ type AppData = {
   sales: SaleRecord[];
 };
 
+type Owner = {
+  name: string;
+  pin: string;
+};
+
 const currency = new Intl.NumberFormat("en-MU", {
   style: "currency",
   currency: "MUR",
   maximumFractionDigits: 0,
 });
+
+const owners: Owner[] = [
+  { name: "Anish", pin: "1111" },
+  { name: "Anoup", pin: "2222" },
+  { name: "Shivam", pin: "3333" },
+  { name: "Inben", pin: "4444" },
+];
 
 const startingData: AppData = {
   partners: [
@@ -72,6 +84,7 @@ const startingData: AppData = {
 };
 
 const storageKey = "farmledger-data-v2";
+const ownerSessionKey = "farmledger-owner-session";
 
 function readNumber(form: FormData, key: string) {
   return Number(form.get(key) || 0);
@@ -84,17 +97,47 @@ function readText(form: FormData, key: string) {
 export default function Home() {
   const [data, setData] = useState<AppData>(startingData);
   const [splitMode, setSplitMode] = useState<"equal" | "investment">("equal");
+  const [activeOwner, setActiveOwner] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey);
     if (saved) {
       setData(JSON.parse(saved) as AppData);
     }
+
+    const savedOwner = window.localStorage.getItem(ownerSessionKey);
+    if (savedOwner && owners.some((owner) => owner.name === savedOwner)) {
+      setActiveOwner(savedOwner);
+    }
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify(data));
   }, [data]);
+
+  function loginOwner(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const ownerName = readText(form, "owner");
+    const pin = readText(form, "pin");
+    const owner = owners.find((item) => item.name === ownerName);
+
+    if (!owner || owner.pin !== pin) {
+      setLoginError("Owner name or PIN is not correct.");
+      return;
+    }
+
+    window.localStorage.setItem(ownerSessionKey, owner.name);
+    setActiveOwner(owner.name);
+    setLoginError("");
+    event.currentTarget.reset();
+  }
+
+  function logoutOwner() {
+    window.localStorage.removeItem(ownerSessionKey);
+    setActiveOwner("");
+  }
 
   const totals = useMemo(() => {
     const investment = data.partners.reduce((sum, item) => sum + item.investment, 0);
@@ -191,6 +234,58 @@ export default function Home() {
     event.currentTarget.reset();
   }
 
+  if (!activeOwner) {
+    return (
+      <main className="login-shell">
+        <section className="login-panel" aria-label="Owner login">
+          <div>
+            <p className="eyebrow">Owner access</p>
+            <h1>Grow Ledger</h1>
+            <p className="intro">
+              Sign in as one of the four owners to view and update the farm
+              business records.
+            </p>
+          </div>
+          <form className="login-form" onSubmit={loginOwner}>
+            <label>
+              Owner
+              <select name="owner" defaultValue="" required>
+                <option value="" disabled>
+                  Choose owner
+                </option>
+                {owners.map((owner) => (
+                  <option key={owner.name} value={owner.name}>
+                    {owner.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              PIN
+              <input
+                autoComplete="current-password"
+                inputMode="numeric"
+                maxLength={4}
+                name="pin"
+                placeholder="4-digit PIN"
+                type="password"
+              />
+            </label>
+            {loginError && <p className="form-error">{loginError}</p>}
+            <button type="submit">Log in</button>
+          </form>
+          <div className="pin-list" aria-label="Prototype PINs">
+            <strong>Prototype PINs</strong>
+            <span>Anish 1111</span>
+            <span>Anoup 2222</span>
+            <span>Shivam 3333</span>
+            <span>Inben 4444</span>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
       <section className="topbar" aria-label="Business summary">
@@ -202,21 +297,30 @@ export default function Home() {
             track land, investment, sales, expenses, and partner profit.
           </p>
         </div>
-        <div className="mode-switch" aria-label="Profit sharing method">
-          <button
-            className={splitMode === "equal" ? "active" : ""}
-            onClick={() => setSplitMode("equal")}
-            type="button"
-          >
-            Equal split
+        <div className="owner-tools">
+          <div className="owner-badge">
+            <span>Signed in</span>
+            <strong>{activeOwner}</strong>
+          </div>
+          <button className="logout-button" onClick={logoutOwner} type="button">
+            Log out
           </button>
-          <button
-            className={splitMode === "investment" ? "active" : ""}
-            onClick={() => setSplitMode("investment")}
-            type="button"
-          >
-            By investment
-          </button>
+          <div className="mode-switch" aria-label="Profit sharing method">
+            <button
+              className={splitMode === "equal" ? "active" : ""}
+              onClick={() => setSplitMode("equal")}
+              type="button"
+            >
+              Equal split
+            </button>
+            <button
+              className={splitMode === "investment" ? "active" : ""}
+              onClick={() => setSplitMode("investment")}
+              type="button"
+            >
+              By investment
+            </button>
+          </div>
         </div>
       </section>
 
