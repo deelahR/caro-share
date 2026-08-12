@@ -34,8 +34,10 @@ test("server-renders the owner login gate", async () => {
   assert.match(html, /<title>AgriBro<\/title>/i);
   assert.match(html, /Private owner portal/);
   assert.match(html, /Owner login/);
+  assert.match(html, /Recover PIN/);
   assert.match(html, /Choose owner/);
-  assert.match(html, /Initial owner PINs/);
+  assert.match(html, /Initial setup PINs/);
+  assert.match(html, /Initial recovery codes/);
   assert.match(html, /secure database/);
   assert.match(html, /Anish/);
   assert.match(html, /Anoup/);
@@ -49,9 +51,23 @@ test("server-renders the owner login gate", async () => {
 });
 
 test("removes starter preview code and documents Render deployment", async () => {
-  const [page, authRoute, postgres, layout, packageJson, readme, renderConfig] = await Promise.all([
+  const [
+    page,
+    authRoute,
+    changePinRoute,
+    recoverPinRoute,
+    profileRoute,
+    postgres,
+    layout,
+    packageJson,
+    readme,
+    renderConfig,
+  ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/login/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/change-pin/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/recover-pin/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/owners/profile/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/postgres.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -64,6 +80,12 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /loginOwner/);
   assert.match(page, /logoutOwner/);
   assert.match(page, /\/api\/auth\/login/);
+  assert.match(page, /\/api\/auth\/change-pin/);
+  assert.match(page, /\/api\/auth\/recover-pin/);
+  assert.match(page, /\/api\/owners\/profile/);
+  assert.match(page, /Owner profile/);
+  assert.match(page, /Change PIN/);
+  assert.match(page, /Recover PIN/);
   assert.match(page, /Database system/);
   assert.match(page, /\/api\/database/);
   assert.doesNotMatch(
@@ -71,10 +93,19 @@ test("removes starter preview code and documents Render deployment", async () =>
     /pin:\s*"1111"|splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
   );
   assert.match(authRoute, /authenticateOwner/);
+  assert.match(changePinRoute, /changeOwnerPin/);
+  assert.match(recoverPinRoute, /recoverOwnerPin/);
+  assert.match(profileRoute, /getOwnerProfile/);
+  assert.match(profileRoute, /updateOwnerProfile/);
   assert.match(postgres, /scryptSync/);
   assert.match(postgres, /timingSafeEqual/);
   assert.match(postgres, /pin_hash/);
   assert.match(postgres, /pin_salt/);
+  assert.match(postgres, /recovery_hash/);
+  assert.match(postgres, /recovery_salt/);
+  assert.match(postgres, /changeOwnerPin/);
+  assert.match(postgres, /recoverOwnerPin/);
+  assert.match(postgres, /updateOwnerProfile/);
   assert.match(layout, /title:\s*"AgriBro"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);

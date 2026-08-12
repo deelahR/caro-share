@@ -143,7 +143,8 @@ h2 {
 
 .login-panel,
 .start-panel,
-.database-panel {
+.database-panel,
+.profile-panel {
   width: min(900px, 100%);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -154,7 +155,7 @@ h2 {
 
 .login-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.7fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.65fr) minmax(260px, 0.65fr);
   gap: 28px;
 }
 
@@ -165,15 +166,34 @@ h2 {
   gap: 24px;
 }
 
-.database-panel {
+.database-panel,
+.profile-panel {
   display: grid;
   gap: 16px;
 }
 
-.database-panel p {
+.database-panel p,
+.profile-panel p {
   margin-bottom: 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.role-badge {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 7px 11px;
 }
 
 .database-facts {
@@ -206,14 +226,35 @@ h2 {
   align-content: start;
 }
 
-.login-form button {
-  width: 130px;
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.compact-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+
+.login-form button,
+.profile-form button {
+  width: max-content;
+  min-width: 130px;
+}
+
+.form-error,
+.form-success {
+  margin: 0;
+  font-weight: 800;
 }
 
 .form-error {
-  margin: 0;
   color: var(--red);
-  font-weight: 800;
+}
+
+.form-success {
+  color: var(--green);
 }
 
 .pin-list {
@@ -260,7 +301,13 @@ h2 {
     flex-direction: column;
   }
 
-  .database-facts {
+  .database-facts,
+  .profile-form,
+  .compact-form {
     grid-template-columns: 1fr;
+  }
+
+  .panel-heading {
+    display: grid;
   }
 }
