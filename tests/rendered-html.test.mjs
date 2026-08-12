@@ -36,13 +36,15 @@ test("server-renders the owner login gate", async () => {
   assert.match(html, /Owner login/);
   assert.match(html, /Choose owner/);
   assert.match(html, /Temporary owner PINs/);
-  assert.match(html, /Only signed-in owners can open the dashboard/);
   assert.match(html, /Anish/);
   assert.match(html, /Anoup/);
   assert.match(html, /Shivam/);
   assert.match(html, /Inben/);
   assert.match(html, /1111/);
-  assert.doesNotMatch(html, /Total investment|Add expense|Tomato early batch|Seeds and trays/);
+  assert.doesNotMatch(
+    html,
+    /Total investment|Add expense|Add sale|Land 1|Land 2|Profit due|Tomato early batch|Seeds and trays/,
+  );
 });
 
 test("removes starter preview code and documents Render deployment", async () => {
@@ -55,12 +57,13 @@ test("removes starter preview code and documents Render deployment", async () =>
   ]);
 
   assert.match(page, /Grow Ledger/);
-  assert.match(page, /splitMode/);
-  assert.match(page, /farmledger-data-v2/);
   assert.match(page, /ownerSessionKey/);
   assert.match(page, /loginOwner/);
   assert.match(page, /logoutOwner/);
-  assert.doesNotMatch(page, /Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/);
+  assert.doesNotMatch(
+    page,
+    /splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
+  );
   assert.match(layout, /title:\s*"Grow Ledger"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
