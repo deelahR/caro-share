@@ -291,6 +291,63 @@ h2 {
   background: var(--green-soft);
 }
 
+.notification {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(420px, calc(100vw - 36px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 16px 40px rgba(55, 45, 28, 0.18);
+  color: var(--ink);
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 12px 12px 12px 14px;
+}
+
+.notification::before {
+  width: 10px;
+  min-width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  content: "";
+}
+
+.notification-success {
+  border-color: #b8d6b1;
+}
+
+.notification-success::before {
+  background: var(--green);
+}
+
+.notification-error {
+  border-color: #e1b6b1;
+}
+
+.notification-error::before {
+  background: var(--red);
+}
+
+.notification button {
+  min-width: 34px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+}
+
+.notification button:hover {
+  background: #fbf7ec;
+  color: var(--ink);
+}
+
 @media (max-width: 760px) {
   .login-panel {
     grid-template-columns: 1fr;
@@ -309,5 +366,11 @@ h2 {
 
   .panel-heading {
     display: grid;
+  }
+
+  .notification {
+    right: 12px;
+    left: 12px;
+    max-width: none;
   }
 }

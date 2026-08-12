@@ -25,6 +25,12 @@ type DatabaseStatus = {
   message: string;
 };
 
+type Notification = {
+  id: number;
+  tone: "success" | "error";
+  message: string;
+};
+
 const owners: Owner[] = [
   { name: "Anish" },
   { name: "Anoup" },
@@ -50,6 +56,16 @@ export default function Home() {
   const [profileMessage, setProfileMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [notification, setNotification] = useState<Notification | null>(null);
+
+  function showNotification(tone: Notification["tone"], message: string) {
+    const id = Date.now();
+
+    setNotification({ id, tone, message });
+    window.setTimeout(() => {
+      setNotification((current) => (current?.id === id ? null : current));
+    }, 5000);
+  }
 
   useEffect(() => {
     const savedOwner = window.localStorage.getItem(ownerSessionKey);
@@ -96,12 +112,17 @@ export default function Home() {
 
     if (!response.ok || !payload.owner) {
       setLoginError(payload.error || "Owner name or PIN is not correct.");
+      showNotification(
+        "error",
+        payload.error || "Owner name or PIN is not correct.",
+      );
       return;
     }
 
     window.localStorage.setItem(ownerSessionKey, payload.owner.name);
     setActiveOwner(payload.owner.name);
     setLoginError("");
+    showNotification("success", `Welcome, ${payload.owner.name}.`);
     event.currentTarget.reset();
   }
 
@@ -130,11 +151,16 @@ export default function Home() {
 
       if (!response.ok || !payload.profile) {
         setProfileMessage(payload.error || "Owner profile could not be saved.");
+        showNotification(
+          "error",
+          payload.error || "Owner profile could not be saved.",
+        );
         return;
       }
 
       setOwnerProfile(payload.profile);
       setProfileMessage("Profile saved.");
+      showNotification("success", "Owner profile saved.");
     } finally {
       setIsSavingProfile(false);
     }
@@ -159,10 +185,12 @@ export default function Home() {
 
     if (!response.ok) {
       setSecurityMessage(payload.error || "PIN could not be changed.");
+      showNotification("error", payload.error || "PIN could not be changed.");
       return;
     }
 
     setSecurityMessage("PIN changed. Use the new PIN next time.");
+    showNotification("success", "PIN changed successfully.");
     event.currentTarget.reset();
   }
 
@@ -185,10 +213,12 @@ export default function Home() {
 
     if (!response.ok) {
       setRecoveryMessage(payload.error || "PIN could not be recovered.");
+      showNotification("error", payload.error || "PIN could not be recovered.");
       return;
     }
 
     setRecoveryMessage("PIN reset. You can log in with the new PIN now.");
+    showNotification("success", "PIN reset successfully.");
     event.currentTarget.reset();
   }
 
@@ -222,6 +252,7 @@ export default function Home() {
     setOwnerProfile(null);
     setProfileMessage("");
     setSecurityMessage("");
+    setNotification(null);
   }
 
   useEffect(() => {
@@ -236,6 +267,21 @@ export default function Home() {
   if (activeOwner) {
     return (
       <main className="app-shell">
+        {notification && (
+          <div
+            className={`notification notification-${notification.tone}`}
+            role="status"
+          >
+            <span>{notification.message}</span>
+            <button
+              aria-label="Dismiss notification"
+              onClick={() => setNotification(null)}
+              type="button"
+            >
+              X
+            </button>
+          </div>
+        )}
         <section className="start-panel" aria-label="Owner start screen">
           <div>
             <p className="eyebrow">Owner workspace</p>
@@ -406,6 +452,21 @@ export default function Home() {
 
   return (
     <main className="login-shell">
+      {notification && (
+        <div
+          className={`notification notification-${notification.tone}`}
+          role="status"
+        >
+          <span>{notification.message}</span>
+          <button
+            aria-label="Dismiss notification"
+            onClick={() => setNotification(null)}
+            type="button"
+          >
+            X
+          </button>
+        </div>
+      )}
       <section className="login-panel" aria-label="Owner login">
         <div>
           <p className="eyebrow">Private owner portal</p>
