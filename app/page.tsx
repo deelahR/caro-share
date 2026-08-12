@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useState } from "react";
 
 type Owner = {
   name: string;
-  pin: string;
 };
 
 type DatabaseStatus = {
@@ -17,10 +16,10 @@ type DatabaseStatus = {
 };
 
 const owners: Owner[] = [
-  { name: "Anish", pin: "1111" },
-  { name: "Anoup", pin: "2222" },
-  { name: "Shivam", pin: "3333" },
-  { name: "Inben", pin: "4444" },
+  { name: "Anish" },
+  { name: "Anoup" },
+  { name: "Shivam" },
+  { name: "Inben" },
 ];
 
 const ownerSessionKey = "agribro-owner-session";
@@ -45,21 +44,31 @@ export default function Home() {
     }
   }, []);
 
-  function loginOwner(event: FormEvent<HTMLFormElement>) {
+  async function loginOwner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
     const ownerName = readText(form, "owner");
     const pin = readText(form, "pin");
-    const owner = owners.find((item) => item.name === ownerName);
+    setLoginError("");
 
-    if (!owner || owner.pin !== pin) {
-      setLoginError("Owner name or PIN is not correct.");
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ owner: ownerName, pin }),
+    });
+    const payload = (await response.json()) as {
+      owner?: Owner;
+      error?: string;
+    };
+
+    if (!response.ok || !payload.owner) {
+      setLoginError(payload.error || "Owner name or PIN is not correct.");
       return;
     }
 
-    window.localStorage.setItem(ownerSessionKey, owner.name);
-    setActiveOwner(owner.name);
+    window.localStorage.setItem(ownerSessionKey, payload.owner.name);
+    setActiveOwner(payload.owner.name);
     setLoginError("");
     event.currentTarget.reset();
   }
@@ -178,8 +187,8 @@ export default function Home() {
           <p className="eyebrow">Private owner portal</p>
           <h1>AgriBro</h1>
           <p className="intro">
-            Sign in as one of the owners. We will build the rest of the
-            business system from here.
+            Sign in as one of the owners. Owner PINs are checked against the
+            secure database before the workspace opens.
           </p>
         </div>
         <form className="login-form" onSubmit={loginOwner}>
@@ -211,8 +220,8 @@ export default function Home() {
           {loginError && <p className="form-error">{loginError}</p>}
           <button type="submit">Log in</button>
         </form>
-        <div className="pin-list" aria-label="Temporary owner PINs">
-          <strong>Temporary owner PINs</strong>
+        <div className="pin-list" aria-label="Initial owner PINs">
+          <strong>Initial owner PINs</strong>
           <span>Anish 1111</span>
           <span>Anoup 2222</span>
           <span>Shivam 3333</span>

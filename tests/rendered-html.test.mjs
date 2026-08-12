@@ -35,7 +35,8 @@ test("server-renders the owner login gate", async () => {
   assert.match(html, /Private owner portal/);
   assert.match(html, /Owner login/);
   assert.match(html, /Choose owner/);
-  assert.match(html, /Temporary owner PINs/);
+  assert.match(html, /Initial owner PINs/);
+  assert.match(html, /secure database/);
   assert.match(html, /Anish/);
   assert.match(html, /Anoup/);
   assert.match(html, /Shivam/);
@@ -48,8 +49,10 @@ test("server-renders the owner login gate", async () => {
 });
 
 test("removes starter preview code and documents Render deployment", async () => {
-  const [page, layout, packageJson, readme, renderConfig] = await Promise.all([
+  const [page, authRoute, postgres, layout, packageJson, readme, renderConfig] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/login/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/postgres.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
@@ -60,12 +63,18 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /ownerSessionKey/);
   assert.match(page, /loginOwner/);
   assert.match(page, /logoutOwner/);
+  assert.match(page, /\/api\/auth\/login/);
   assert.match(page, /Database system/);
   assert.match(page, /\/api\/database/);
   assert.doesNotMatch(
     page,
-    /splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
+    /pin:\s*"1111"|splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
   );
+  assert.match(authRoute, /authenticateOwner/);
+  assert.match(postgres, /scryptSync/);
+  assert.match(postgres, /timingSafeEqual/);
+  assert.match(postgres, /pin_hash/);
+  assert.match(postgres, /pin_salt/);
   assert.match(layout, /title:\s*"AgriBro"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);

@@ -1,3 +1,4 @@
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { Pool } from "pg";
 
 let pool: Pool | null = null;
@@ -11,7 +12,29 @@ export type DatabaseStatus = {
   message: string;
 };
 
-const ownerNames = ["Anish", "Anoup", "Shivam", "Inben"];
+const initialOwners = [
+  { name: "Anish", pin: "1111" },
+  { name: "Anoup", pin: "2222" },
+  { name: "Shivam", pin: "3333" },
+  { name: "Inben", pin: "4444" },
+];
+
+function hashPin(pin: string, salt = randomBytes(16).toString("hex")) {
+  return {
+    salt,
+    hash: scryptSync(pin, salt, 64).toString("hex"),
+  };
+}
+
+function verifyPin(pin: string, salt: string, expectedHash: string) {
+  const attemptedHash = scryptSync(pin, salt, 64);
+  const storedHash = Buffer.from(expectedHash, "hex");
+
+  return (
+    attemptedHash.length === storedHash.length &&
+    timingSafeEqual(attemptedHash, storedHash)
+  );
+}
 
 function getDatabaseUrl() {
   return process.env.DATABASE_URL?.trim() || "";
@@ -94,13 +117,17 @@ export async function initializeDatabase() {
 
   try {
     await client.query("begin");
-    await client.query(`
+      await client.query(`
       create table if not exists owners (
         id bigserial primary key,
         name text not null unique,
+        pin_hash text,
+        pin_salt text,
         created_at timestamptz not null default now()
       )
     `);
+    await client.query("alter table owners add column if not exists pin_hash text");
+    await client.query("alter table owners add column if not exists pin_salt text");
     await client.query(`
       create table if not exists app_events (
         id bigserial primary key,
@@ -110,10 +137,18 @@ export async function initializeDatabase() {
       )
     `);
 
-    for (const name of ownerNames) {
+    for (const owner of initialOwners) {
+      const credentials = hashPin(owner.pin);
       await client.query(
-        "insert into owners (name) values ($1) on conflict (name) do nothing",
-        [name],
+        `
+          insert into owners (name, pin_hash, pin_salt)
+          values ($1, $2, $3)
+          on conflict (name) do update
+          set
+            pin_hash = coalesce(owners.pin_hash, excluded.pin_hash),
+            pin_salt = coalesce(owners.pin_salt, excluded.pin_salt)
+        `,
+        [owner.name, credentials.hash, credentials.salt],
       );
     }
 
@@ -130,4 +165,35 @@ export async function initializeDatabase() {
   }
 
   return getDatabaseStatus();
+}
+
+export async function authenticateOwner(name: string, pin: string) {
+  if (!name || !pin) {
+    return null;
+  }
+
+  const result = await getPool().query<{
+    name: string;
+    pin_hash: string | null;
+    pin_salt: string | null;
+  }>(
+    "select name, pin_hash, pin_salt from owners where lower(name) = lower($1)",
+    [name],
+  );
+  const owner = result.rows[0];
+
+  if (!owner?.pin_hash || !owner.pin_salt) {
+    return null;
+  }
+
+  if (!verifyPin(pin, owner.pin_salt, owner.pin_hash)) {
+    return null;
+  }
+
+  await getPool().query(
+    "insert into app_events (owner_name, action) values ($1, $2)",
+    [owner.name, "Owner logged in"],
+  );
+
+  return { name: owner.name };
 }
