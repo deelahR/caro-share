@@ -61,6 +61,11 @@ button:hover {
   background: #2f7d4b;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 input,
 select {
   width: 100%;
@@ -123,12 +128,22 @@ h2 {
 .app-shell {
   display: grid;
   min-height: 100vh;
-  place-items: center;
   padding: 24px;
 }
 
+.login-shell {
+  place-items: center;
+}
+
+.app-shell {
+  align-content: center;
+  justify-items: center;
+  gap: 16px;
+}
+
 .login-panel,
-.start-panel {
+.start-panel,
+.database-panel {
   width: min(900px, 100%);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -148,6 +163,41 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+}
+
+.database-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.database-panel p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.database-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.database-facts span {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fbf7ec;
+  color: var(--muted);
+  padding: 10px 12px;
+}
+
+.database-facts strong {
+  color: var(--ink);
+}
+
+.database-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .login-form {
@@ -208,5 +258,9 @@ h2 {
   .start-panel {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .database-facts {
+    grid-template-columns: 1fr;
   }
 }

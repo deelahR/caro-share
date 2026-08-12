@@ -60,6 +60,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /ownerSessionKey/);
   assert.match(page, /loginOwner/);
   assert.match(page, /logoutOwner/);
+  assert.match(page, /Database system/);
+  assert.match(page, /\/api\/database/);
   assert.doesNotMatch(
     page,
     /splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
@@ -67,9 +69,14 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(layout, /title:\s*"AgriBro"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(packageJson, /"pg"/);
   assert.match(readme, /Deploy on Render/);
+  assert.match(readme, /PostgreSQL database named `agribro-db`/);
   assert.match(renderConfig, /type:\s*web/);
   assert.match(renderConfig, /runtime:\s*node/);
+  assert.match(renderConfig, /DATABASE_URL/);
+  assert.match(renderConfig, /fromDatabase/);
+  assert.match(renderConfig, /name:\s*agribro-db/);
   assert.match(renderConfig, /buildCommand:\s*npm ci --include=dev && npm run build/);
   assert.match(renderConfig, /startCommand:\s*npm run start/);
 

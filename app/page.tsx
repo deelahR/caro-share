@@ -7,6 +7,15 @@ type Owner = {
   pin: string;
 };
 
+type DatabaseStatus = {
+  configured: boolean;
+  connected: boolean;
+  initialized: boolean;
+  databaseName?: string;
+  ownerCount?: number;
+  message: string;
+};
+
 const owners: Owner[] = [
   { name: "Anish", pin: "1111" },
   { name: "Anoup", pin: "2222" },
@@ -22,6 +31,10 @@ function readText(form: FormData, key: string) {
 
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
+  const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus | null>(
+    null,
+  );
+  const [isCheckingDatabase, setIsCheckingDatabase] = useState(false);
   const [loginError, setLoginError] = useState("");
 
   useEffect(() => {
@@ -51,10 +64,40 @@ export default function Home() {
     event.currentTarget.reset();
   }
 
+  async function refreshDatabaseStatus() {
+    setIsCheckingDatabase(true);
+
+    try {
+      const response = await fetch("/api/database");
+      const status = (await response.json()) as DatabaseStatus;
+      setDatabaseStatus(status);
+    } finally {
+      setIsCheckingDatabase(false);
+    }
+  }
+
+  async function initializeDatabase() {
+    setIsCheckingDatabase(true);
+
+    try {
+      const response = await fetch("/api/database", { method: "POST" });
+      const status = (await response.json()) as DatabaseStatus;
+      setDatabaseStatus(status);
+    } finally {
+      setIsCheckingDatabase(false);
+    }
+  }
+
   function logoutOwner() {
     window.localStorage.removeItem(ownerSessionKey);
     setActiveOwner("");
   }
+
+  useEffect(() => {
+    if (activeOwner) {
+      void refreshDatabaseStatus();
+    }
+  }, [activeOwner]);
 
   if (activeOwner) {
     return (
@@ -71,6 +114,58 @@ export default function Home() {
           <button className="logout-button" onClick={logoutOwner} type="button">
             Log out
           </button>
+        </section>
+        <section className="database-panel" aria-label="Database status">
+          <div>
+            <p className="eyebrow">Database system</p>
+            <h2>Shared storage</h2>
+            <p>
+              {databaseStatus?.message ??
+                "Checking database connection for AgriBro."}
+            </p>
+          </div>
+          <div className="database-facts">
+            <span>
+              Configured: <strong>{databaseStatus?.configured ? "Yes" : "No"}</strong>
+            </span>
+            <span>
+              Connected: <strong>{databaseStatus?.connected ? "Yes" : "No"}</strong>
+            </span>
+            <span>
+              Initialized:{" "}
+              <strong>{databaseStatus?.initialized ? "Yes" : "No"}</strong>
+            </span>
+            {databaseStatus?.databaseName && (
+              <span>
+                Database: <strong>{databaseStatus.databaseName}</strong>
+              </span>
+            )}
+            {databaseStatus?.ownerCount !== undefined && (
+              <span>
+                Owners saved: <strong>{databaseStatus.ownerCount}</strong>
+              </span>
+            )}
+          </div>
+          <div className="database-actions">
+            <button
+              disabled={isCheckingDatabase}
+              onClick={refreshDatabaseStatus}
+              type="button"
+            >
+              Check database
+            </button>
+            <button
+              disabled={
+                isCheckingDatabase ||
+                !databaseStatus?.configured ||
+                !databaseStatus?.connected
+              }
+              onClick={initializeDatabase}
+              type="button"
+            >
+              Initialize tables
+            </button>
+          </div>
         </section>
       </main>
     );

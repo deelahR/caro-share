@@ -26,10 +26,12 @@ This project includes `render.yaml` for Render Blueprints.
    - Build command: `npm ci --include=dev && npm run build`
    - Start command: `npm run start`
    - Node.js `>=22.13.0`
+4. The Blueprint also creates a Render PostgreSQL database named `agribro-db`
+   and injects `DATABASE_URL` into the web service.
 
-The app currently stores records in the browser on each device. To share live
-records between all four owners, add a hosted database before relying on it for
-daily operations.
+After logging in, use the database panel to check the connection and initialize
+the first tables. Render Free PostgreSQL databases expire after 30 days; use a
+paid database plan before relying on it for daily operations.
 
 This starter does not use `wrangler.jsonc`.
 
