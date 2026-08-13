@@ -46,6 +46,27 @@ export type BusinessEntriesData = {
   accepted: BusinessEntry[];
 };
 
+export type EquipmentStatus = "available" | "upcoming";
+
+export type EquipmentItem = {
+  id: number;
+  name: string;
+  status: EquipmentStatus;
+  quantity: number;
+  estimatedCost: number;
+  targetDate: string;
+  ownerName: string;
+  createdBy: string;
+  imageData: string;
+  note: string;
+  createdAt: string;
+};
+
+export type EquipmentData = {
+  available: EquipmentItem[];
+  upcoming: EquipmentItem[];
+};
+
 const initialOwners = [
   { name: "Anish", pin: "1111", recoveryCode: "ANISH-2026" },
   { name: "Anoup", pin: "2222", recoveryCode: "ANOUP-2026" },
@@ -189,6 +210,37 @@ function mapBusinessEntry(row: {
   };
 }
 
+function mapEquipmentItem(row: {
+  id: string | number;
+  name: string;
+  status: EquipmentStatus;
+  quantity: string | number;
+  estimated_cost: string;
+  target_date: string | Date | null;
+  owner_name: string;
+  created_by: string;
+  image_data: string | null;
+  note: string | null;
+  created_at: Date;
+}): EquipmentItem {
+  return {
+    id: Number(row.id),
+    name: row.name,
+    status: row.status,
+    quantity: Number(row.quantity),
+    estimatedCost: Number(row.estimated_cost),
+    targetDate:
+      row.target_date instanceof Date
+        ? row.target_date.toISOString().slice(0, 10)
+        : row.target_date || "",
+    ownerName: row.owner_name,
+    createdBy: row.created_by,
+    imageData: row.image_data || "",
+    note: row.note || "",
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
 export async function getDatabaseStatus(): Promise<DatabaseStatus> {
   if (!getDatabaseUrl()) {
     return {
@@ -309,6 +361,22 @@ export async function initializeDatabase() {
         unique (entry_id, owner_name)
       )
     `);
+    await client.query(`
+      create table if not exists equipment_items (
+        id bigserial primary key,
+        name text not null,
+        status text not null check (status in ('available', 'upcoming')),
+        quantity integer not null default 1 check (quantity > 0),
+        estimated_cost numeric(12, 2) not null default 0 check (estimated_cost >= 0),
+        target_date date,
+        owner_name text not null references owners(name),
+        created_by text not null references owners(name),
+        image_data text,
+        note text,
+        created_at timestamptz not null default now()
+      )
+    `);
+    await client.query("alter table equipment_items add column if not exists image_data text");
     await client.query(`
       insert into entry_approvals (entry_id, owner_name)
       select id, created_by
@@ -732,4 +800,102 @@ export async function approveBusinessEntry(entryId: number, ownerName: string) {
   } finally {
     client.release();
   }
+}
+
+export async function listEquipment(): Promise<EquipmentData> {
+  const result = await getPool().query<{
+    id: string;
+    name: string;
+    status: EquipmentStatus;
+    quantity: string;
+    estimated_cost: string;
+    target_date: string | null;
+    owner_name: string;
+    created_by: string;
+    image_data: string | null;
+    note: string | null;
+    created_at: Date;
+  }>(`
+    select
+      id,
+      name,
+      status,
+      quantity,
+      estimated_cost,
+      target_date,
+      owner_name,
+      created_by,
+      image_data,
+      note,
+      created_at
+    from equipment_items
+    order by created_at desc
+  `);
+  const equipment = result.rows.map(mapEquipmentItem);
+
+  return {
+    available: equipment.filter((item) => item.status === "available"),
+    upcoming: equipment.filter((item) => item.status === "upcoming"),
+  };
+}
+
+export async function createEquipmentItem(item: {
+  name: string;
+  status: string;
+  quantity: number;
+  estimatedCost: number;
+  targetDate: string;
+  ownerName: string;
+  createdBy: string;
+  imageData: string;
+  note: string;
+}) {
+  if (
+    !item.name ||
+    !["available", "upcoming"].includes(item.status) ||
+    !item.ownerName ||
+    !item.createdBy ||
+    !Number.isInteger(item.quantity) ||
+    item.quantity <= 0 ||
+    !Number.isFinite(item.estimatedCost) ||
+    item.estimatedCost < 0
+  ) {
+    return null;
+  }
+
+  const result = await getPool().query<{ id: string }>(
+    `
+      insert into equipment_items (
+        name,
+        status,
+        quantity,
+        estimated_cost,
+        target_date,
+        owner_name,
+        created_by,
+        image_data,
+        note
+      )
+      values ($1, $2, $3, $4, nullif($5, '')::date, $6, $7, nullif($8, ''), nullif($9, ''))
+      returning id
+    `,
+    [
+      item.name,
+      item.status,
+      item.quantity,
+      item.estimatedCost,
+      item.targetDate,
+      item.ownerName,
+      item.createdBy,
+      item.imageData,
+      item.note,
+    ],
+  );
+
+  await getPool().query(
+    "insert into app_events (owner_name, action) values ($1, $2)",
+    [item.createdBy, `Added ${item.status} equipment item`],
+  );
+
+  return { id: Number(result.rows[0].id) };
 }

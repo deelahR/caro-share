@@ -55,6 +55,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     changePinRoute,
     entriesRoute,
     entriesApproveRoute,
+    equipmentRoute,
     recoverPinRoute,
     profileRoute,
     postgres,
@@ -68,6 +69,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     readFile(new URL("../app/api/auth/change-pin/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/entries/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/entries/approve/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/equipment/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/recover-pin/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/owners/profile/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/postgres.ts", import.meta.url), "utf8"),
@@ -87,6 +89,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /\/api\/owners\/profile/);
   assert.match(page, /\/api\/entries/);
   assert.match(page, /\/api\/entries\/approve/);
+  assert.match(page, /\/api\/equipment/);
   assert.match(page, /Owner profile/);
   assert.match(page, /Change PIN/);
   assert.match(page, /Secure area/);
@@ -94,6 +97,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Recover PIN/);
   assert.match(page, /Add entry for approval/);
   assert.match(page, /Pending approvals/);
+  assert.match(page, /Equipment register/);
+  assert.match(page, /Available and upcoming equipment/);
+  assert.match(page, /capture="environment"/);
   assert.match(page, /2 owner approvals/);
   assert.match(page, /Database system/);
   assert.match(page, /\/api\/database/);
@@ -106,6 +112,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(entriesRoute, /createBusinessEntry/);
   assert.match(entriesRoute, /listBusinessEntries/);
   assert.match(entriesApproveRoute, /approveBusinessEntry/);
+  assert.match(equipmentRoute, /createEquipmentItem/);
+  assert.match(equipmentRoute, /listEquipment/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
@@ -121,6 +129,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /entryCategories/);
   assert.match(postgres, /business_entries/);
   assert.match(postgres, /entry_approvals/);
+  assert.match(postgres, /equipment_items/);
+  assert.match(postgres, /image_data/);
+  assert.match(postgres, /listEquipment/);
+  assert.match(postgres, /createEquipmentItem/);
   assert.match(postgres, /approvalCount >= 2/);
   assert.match(postgres, /select id, created_by/);
   assert.match(postgres, /approvalCount: 1/);

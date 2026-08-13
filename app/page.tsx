@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 type Owner = {
@@ -53,7 +55,32 @@ type EntriesData = {
   accepted: BusinessEntry[];
 };
 
-type AppSection = "entries" | "approvals" | "records" | "account" | "system";
+type EquipmentItem = {
+  id: number;
+  name: string;
+  status: "available" | "upcoming";
+  quantity: number;
+  estimatedCost: number;
+  targetDate: string;
+  ownerName: string;
+  createdBy: string;
+  imageData: string;
+  note: string;
+  createdAt: string;
+};
+
+type EquipmentData = {
+  available: EquipmentItem[];
+  upcoming: EquipmentItem[];
+};
+
+type AppSection =
+  | "entries"
+  | "approvals"
+  | "records"
+  | "equipment"
+  | "account"
+  | "system";
 
 const owners: Owner[] = [
   { name: "Anish" },
@@ -74,6 +101,16 @@ function readText(form: FormData, key: string) {
   return String(form.get(key) || "").trim();
 }
 
+function readImageFile(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
   const [activeSection, setActiveSection] = useState<AppSection>("entries");
@@ -89,8 +126,11 @@ export default function Home() {
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [notification, setNotification] = useState<Notification | null>(null);
   const [entriesData, setEntriesData] = useState<EntriesData | null>(null);
+  const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
+  const [equipmentImage, setEquipmentImage] = useState("");
   const [isSavingEntry, setIsSavingEntry] = useState(false);
+  const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
 
   const showNotification = useCallback(
@@ -140,6 +180,21 @@ export default function Home() {
     }
 
     setEntriesData(payload);
+  }, [showNotification]);
+
+  const loadEquipment = useCallback(async () => {
+    const response = await fetch("/api/equipment");
+    const payload = (await response.json()) as EquipmentData & { error?: string };
+
+    if (!response.ok) {
+      showNotification(
+        "error",
+        payload.error || "Equipment could not be loaded.",
+      );
+      return;
+    }
+
+    setEquipmentData(payload);
   }, [showNotification]);
 
   async function loginOwner(event: FormEvent<HTMLFormElement>) {
@@ -349,6 +404,70 @@ export default function Home() {
     }
   }
 
+  async function submitEquipment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    setIsSavingEquipment(true);
+
+    try {
+      const response = await fetch("/api/equipment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: readText(form, "equipmentName"),
+          status: readText(form, "equipmentStatus"),
+          quantity: readText(form, "equipmentQuantity"),
+          estimatedCost: readText(form, "equipmentCost"),
+          targetDate: readText(form, "equipmentDate"),
+          ownerName: readText(form, "equipmentOwner"),
+          createdBy: activeOwner,
+          imageData: equipmentImage,
+          note: readText(form, "equipmentNote"),
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        showNotification(
+          "error",
+          payload.error || "Equipment could not be saved.",
+        );
+        return;
+      }
+
+      showNotification("success", "Equipment saved to the register.");
+      event.currentTarget.reset();
+      setEquipmentImage("");
+      await loadEquipment();
+    } finally {
+      setIsSavingEquipment(false);
+    }
+  }
+
+  async function chooseEquipmentImage(event: FormEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+
+    if (!file) {
+      setEquipmentImage("");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      showNotification("error", "Please choose an image file.");
+      event.currentTarget.value = "";
+      return;
+    }
+
+    if (file.size > 1_500_000) {
+      showNotification("error", "Image is too large. Please use a smaller photo.");
+      event.currentTarget.value = "";
+      return;
+    }
+
+    setEquipmentImage(await readImageFile(file));
+  }
+
   async function refreshDatabaseStatus() {
     setIsCheckingDatabase(true);
 
@@ -389,15 +508,18 @@ export default function Home() {
         void refreshDatabaseStatus();
         void loadOwnerProfile(activeOwner);
         void loadEntries();
+        void loadEquipment();
       });
     }
-  }, [activeOwner, loadEntries]);
+  }, [activeOwner, loadEntries, loadEquipment]);
 
   const categories = entriesData?.categories ?? {};
   const selectedCategories = categories[selectedEntryType] ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const pendingCount = entriesData?.pending.length ?? 0;
   const acceptedCount = entriesData?.accepted.length ?? 0;
+  const equipmentCount =
+    (equipmentData?.available.length ?? 0) + (equipmentData?.upcoming.length ?? 0);
   const totalAccepted = entriesData?.accepted.reduce(
     (sum, entry) => sum + entry.amount,
     0,
@@ -442,6 +564,7 @@ export default function Home() {
               ["entries", "New entry"],
               ["approvals", `Approvals (${pendingCount})`],
               ["records", "Accepted records"],
+              ["equipment", "Equipment"],
               ["account", "Account"],
               ["system", "System"],
             ].map(([section, label]) => (
@@ -472,6 +595,10 @@ export default function Home() {
             <div>
               <span>Accepted amount</span>
               <strong>Rs {totalAccepted.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>Equipment items</span>
+              <strong>{equipmentCount}</strong>
             </div>
           </section>
 
@@ -641,6 +768,166 @@ export default function Home() {
                 ) : (
                   <p>No accepted entries yet.</p>
                 )}
+              </div>
+            </section>
+          )}
+
+          {activeSection === "equipment" && (
+            <section className="content-panel" aria-label="Equipment register">
+              <div>
+                <p className="eyebrow">Equipment register</p>
+                <h2>Available and upcoming equipment</h2>
+                <p>
+                  Track business equipment separately from expenses and
+                  investments.
+                </p>
+              </div>
+              <form className="entry-form" onSubmit={submitEquipment}>
+                <label>
+                  Equipment name
+                  <input
+                    name="equipmentName"
+                    placeholder="Water pump, tiller, sprayer"
+                    required
+                  />
+                </label>
+                <label>
+                  Status
+                  <select name="equipmentStatus" defaultValue="available">
+                    <option value="available">Available</option>
+                    <option value="upcoming">Upcoming</option>
+                  </select>
+                </label>
+                <label>
+                  Quantity
+                  <input
+                    defaultValue="1"
+                    min="1"
+                    name="equipmentQuantity"
+                    required
+                    step="1"
+                    type="number"
+                  />
+                </label>
+                <label>
+                  Cost / estimate
+                  <input
+                    min="0"
+                    name="equipmentCost"
+                    placeholder="0.00"
+                    step="0.01"
+                    type="number"
+                  />
+                </label>
+                <label>
+                  Date
+                  <input name="equipmentDate" type="date" />
+                </label>
+                <label>
+                  Responsible owner
+                  <select name="equipmentOwner" defaultValue={activeOwner}>
+                    {owners.map((owner) => (
+                      <option key={owner.name} value={owner.name}>
+                        {owner.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="entry-note">
+                  Note
+                  <input
+                    name="equipmentNote"
+                    placeholder="Condition, supplier, purpose, or next action"
+                  />
+                </label>
+                <label className="image-field">
+                  Photo
+                  <input
+                    accept="image/*"
+                    capture="environment"
+                    name="equipmentImage"
+                    onChange={chooseEquipmentImage}
+                    type="file"
+                  />
+                </label>
+                {equipmentImage && (
+                  <div className="image-preview">
+                    <img alt="Selected equipment preview" src={equipmentImage} />
+                    <button
+                      onClick={() => setEquipmentImage("")}
+                      type="button"
+                    >
+                      Remove photo
+                    </button>
+                  </div>
+                )}
+                <button disabled={isSavingEquipment} type="submit">
+                  Save equipment
+                </button>
+              </form>
+              <div className="equipment-grid">
+                <div>
+                  <h3>Available equipment</h3>
+                  <div className="entry-list">
+                    {equipmentData?.available.length ? (
+                      equipmentData.available.map((item) => (
+                        <article className="entry-card accepted-card" key={item.id}>
+                          <div>
+                            <strong>{item.name}</strong>
+                            {item.imageData && (
+                              <img
+                                alt={`${item.name} equipment`}
+                                className="equipment-photo"
+                                src={item.imageData}
+                              />
+                            )}
+                            <span>
+                              Qty {item.quantity} - Rs{" "}
+                              {item.estimatedCost.toFixed(2)}
+                            </span>
+                            <span>Responsible: {item.ownerName}</span>
+                            {item.targetDate && <span>Date: {item.targetDate}</span>}
+                            {item.note && <span>Note: {item.note}</span>}
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <p>No available equipment saved yet.</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <h3>Upcoming equipment</h3>
+                  <div className="entry-list">
+                    {equipmentData?.upcoming.length ? (
+                      equipmentData.upcoming.map((item) => (
+                        <article className="entry-card" key={item.id}>
+                          <div>
+                            <strong>{item.name}</strong>
+                            {item.imageData && (
+                              <img
+                                alt={`${item.name} equipment`}
+                                className="equipment-photo"
+                                src={item.imageData}
+                              />
+                            )}
+                            <span>
+                              Qty {item.quantity} - estimated Rs{" "}
+                              {item.estimatedCost.toFixed(2)}
+                            </span>
+                            <span>Responsible: {item.ownerName}</span>
+                            {item.targetDate && (
+                              <span>Target date: {item.targetDate}</span>
+                            )}
+                            {item.note && <span>Note: {item.note}</span>}
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <p>No upcoming equipment saved yet.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </section>
           )}

@@ -292,7 +292,7 @@ h2 {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -380,6 +380,53 @@ h2 {
 
 .entry-note {
   grid-column: span 2;
+}
+
+.image-field {
+  grid-column: span 2;
+}
+
+.image-field input {
+  padding-block: 9px;
+}
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.image-preview img,
+.equipment-photo {
+  width: 104px;
+  height: 78px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.image-preview button {
+  min-width: 120px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+
+.image-preview button:hover {
+  background: #fbf7ec;
+  color: var(--ink);
+}
+
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.equipment-grid h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 1rem;
 }
 
 .account-grid {
@@ -589,6 +636,15 @@ h2 {
 
   .entry-note {
     grid-column: auto;
+  }
+
+  .image-field,
+  .equipment-grid {
+    grid-column: auto;
+  }
+
+  .equipment-grid {
+    grid-template-columns: 1fr;
   }
 
   .entry-card {
