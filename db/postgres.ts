@@ -22,12 +22,77 @@ export type OwnerProfile = {
   updatedAt: string;
 };
 
+export type EntryStatus = "pending" | "accepted";
+
+export type BusinessEntry = {
+  id: number;
+  entryType: string;
+  category: string;
+  amount: number;
+  quantity: string;
+  ownerName: string;
+  createdBy: string;
+  entryDate: string;
+  note: string;
+  status: EntryStatus;
+  approvalCount: number;
+  approvedBy: string[];
+  createdAt: string;
+};
+
+export type BusinessEntriesData = {
+  categories: Record<string, string[]>;
+  pending: BusinessEntry[];
+  accepted: BusinessEntry[];
+};
+
 const initialOwners = [
   { name: "Anish", pin: "1111", recoveryCode: "ANISH-2026" },
   { name: "Anoup", pin: "2222", recoveryCode: "ANOUP-2026" },
   { name: "Shivam", pin: "3333", recoveryCode: "SHIVAM-2026" },
   { name: "Inben", pin: "4444", recoveryCode: "INBEN-2026" },
 ];
+
+export const entryCategories: Record<string, string[]> = {
+  investment: [
+    "Owner capital",
+    "Land contribution",
+    "Equipment contribution",
+    "Loan to business",
+    "Other investment",
+  ],
+  expense: [
+    "Seeds",
+    "Fertilizer",
+    "Pesticide",
+    "Tools",
+    "Equipment",
+    "Land rent",
+    "Water",
+    "Electricity",
+    "Labour",
+    "Transport",
+    "Fuel",
+    "Vehicle repair",
+    "Packaging",
+    "Market fees",
+    "Storage",
+    "Phone and internet",
+    "Admin fees",
+    "Loan payment",
+    "Other expense",
+  ],
+  sale: [
+    "Vegetables",
+    "Tomatoes",
+    "Leafy greens",
+    "Herbs",
+    "Wholesale sale",
+    "Market sale",
+    "Direct customer sale",
+    "Other sale",
+  ],
+};
 
 function hashSecret(secret: string, salt = randomBytes(16).toString("hex")) {
   return {
@@ -86,6 +151,41 @@ function mapOwnerProfile(row: {
     email: row.email || "",
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function mapBusinessEntry(row: {
+  id: string | number;
+  entry_type: string;
+  category: string;
+  amount: string;
+  quantity: string | null;
+  owner_name: string;
+  created_by: string;
+  entry_date: string | Date;
+  note: string | null;
+  status: EntryStatus;
+  approval_count: string | number;
+  approved_by: string[] | null;
+  created_at: Date;
+}): BusinessEntry {
+  return {
+    id: Number(row.id),
+    entryType: row.entry_type,
+    category: row.category,
+    amount: Number(row.amount),
+    quantity: row.quantity || "",
+    ownerName: row.owner_name,
+    createdBy: row.created_by,
+    entryDate:
+      row.entry_date instanceof Date
+        ? row.entry_date.toISOString().slice(0, 10)
+        : row.entry_date,
+    note: row.note || "",
+    status: row.status,
+    approvalCount: Number(row.approval_count),
+    approvedBy: row.approved_by || [],
+    createdAt: row.created_at.toISOString(),
   };
 }
 
@@ -182,6 +282,31 @@ export async function initializeDatabase() {
         owner_name text not null references owners(name),
         action text not null,
         created_at timestamptz not null default now()
+      )
+    `);
+    await client.query(`
+      create table if not exists business_entries (
+        id bigserial primary key,
+        entry_type text not null check (entry_type in ('investment', 'expense', 'sale')),
+        category text not null,
+        amount numeric(12, 2) not null check (amount >= 0),
+        quantity text,
+        owner_name text not null references owners(name),
+        created_by text not null references owners(name),
+        entry_date date not null,
+        note text,
+        status text not null default 'pending' check (status in ('pending', 'accepted')),
+        accepted_at timestamptz,
+        created_at timestamptz not null default now()
+      )
+    `);
+    await client.query(`
+      create table if not exists entry_approvals (
+        id bigserial primary key,
+        entry_id bigint not null references business_entries(id) on delete cascade,
+        owner_name text not null references owners(name),
+        created_at timestamptz not null default now(),
+        unique (entry_id, owner_name)
       )
     `);
 
@@ -412,4 +537,173 @@ export async function recoverOwnerPin(
   );
 
   return { name: owner.name };
+}
+
+export async function listBusinessEntries(): Promise<BusinessEntriesData> {
+  const result = await getPool().query<{
+    id: string;
+    entry_type: string;
+    category: string;
+    amount: string;
+    quantity: string | null;
+    owner_name: string;
+    created_by: string;
+    entry_date: string;
+    note: string | null;
+    status: EntryStatus;
+    approval_count: string;
+    approved_by: string[] | null;
+    created_at: Date;
+  }>(`
+    select
+      business_entries.id,
+      business_entries.entry_type,
+      business_entries.category,
+      business_entries.amount,
+      business_entries.quantity,
+      business_entries.owner_name,
+      business_entries.created_by,
+      business_entries.entry_date,
+      business_entries.note,
+      business_entries.status,
+      count(entry_approvals.id) as approval_count,
+      coalesce(
+        array_agg(entry_approvals.owner_name order by entry_approvals.created_at)
+          filter (where entry_approvals.owner_name is not null),
+        array[]::text[]
+      ) as approved_by,
+      business_entries.created_at
+    from business_entries
+    left join entry_approvals on entry_approvals.entry_id = business_entries.id
+    group by business_entries.id
+    order by business_entries.created_at desc
+  `);
+  const entries = result.rows.map(mapBusinessEntry);
+
+  return {
+    categories: entryCategories,
+    pending: entries.filter((entry) => entry.status === "pending"),
+    accepted: entries.filter((entry) => entry.status === "accepted"),
+  };
+}
+
+export async function createBusinessEntry(entry: {
+  entryType: string;
+  category: string;
+  amount: number;
+  quantity: string;
+  ownerName: string;
+  createdBy: string;
+  entryDate: string;
+  note: string;
+}) {
+  if (
+    !entryCategories[entry.entryType]?.includes(entry.category) ||
+    !entry.ownerName ||
+    !entry.createdBy ||
+    !entry.entryDate ||
+    !Number.isFinite(entry.amount) ||
+    entry.amount <= 0
+  ) {
+    return null;
+  }
+
+  const result = await getPool().query<{ id: string }>(
+    `
+      insert into business_entries (
+        entry_type,
+        category,
+        amount,
+        quantity,
+        owner_name,
+        created_by,
+        entry_date,
+        note
+      )
+      values ($1, $2, $3, nullif($4, ''), $5, $6, $7, nullif($8, ''))
+      returning id
+    `,
+    [
+      entry.entryType,
+      entry.category,
+      entry.amount,
+      entry.quantity,
+      entry.ownerName,
+      entry.createdBy,
+      entry.entryDate,
+      entry.note,
+    ],
+  );
+
+  await getPool().query(
+    "insert into app_events (owner_name, action) values ($1, $2)",
+    [entry.createdBy, `Submitted ${entry.entryType} entry for approval`],
+  );
+
+  return { id: Number(result.rows[0].id), status: "pending" as const };
+}
+
+export async function approveBusinessEntry(entryId: number, ownerName: string) {
+  if (!entryId || !ownerName) {
+    return null;
+  }
+
+  const client = await getPool().connect();
+
+  try {
+    await client.query("begin");
+
+    const entry = await client.query<{
+      id: string;
+      status: EntryStatus;
+    }>(
+      "select id, status from business_entries where id = $1 for update",
+      [entryId],
+    );
+
+    if (!entry.rows[0] || entry.rows[0].status === "accepted") {
+      await client.query("rollback");
+      return null;
+    }
+
+    await client.query(
+      `
+        insert into entry_approvals (entry_id, owner_name)
+        values ($1, $2)
+        on conflict (entry_id, owner_name) do nothing
+      `,
+      [entryId, ownerName],
+    );
+
+    const approvals = await client.query<{ count: string }>(
+      "select count(*) from entry_approvals where entry_id = $1",
+      [entryId],
+    );
+    const approvalCount = Number(approvals.rows[0]?.count || 0);
+    const status = approvalCount >= 2 ? "accepted" : "pending";
+
+    if (status === "accepted") {
+      await client.query(
+        `
+          update business_entries
+          set status = 'accepted', accepted_at = now()
+          where id = $1
+        `,
+        [entryId],
+      );
+    }
+
+    await client.query(
+      "insert into app_events (owner_name, action) values ($1, $2)",
+      [ownerName, `Approved entry ${entryId}`],
+    );
+    await client.query("commit");
+
+    return { id: entryId, status, approvalCount };
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }

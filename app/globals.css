@@ -144,7 +144,8 @@ h2 {
 .login-panel,
 .start-panel,
 .database-panel,
-.profile-panel {
+.profile-panel,
+.entry-panel {
   width: min(900px, 100%);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -167,13 +168,15 @@ h2 {
 }
 
 .database-panel,
-.profile-panel {
+.profile-panel,
+.entry-panel {
   display: grid;
   gap: 16px;
 }
 
 .database-panel p,
-.profile-panel p {
+.profile-panel p,
+.entry-panel p {
   margin-bottom: 0;
   color: var(--muted);
   line-height: 1.45;
@@ -233,12 +236,24 @@ h2 {
   align-items: end;
 }
 
+.entry-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.entry-note {
+  grid-column: span 2;
+}
+
 .compact-form {
   grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
 }
 
 .login-form button,
-.profile-form button {
+.profile-form button,
+.entry-form button {
   width: max-content;
   min-width: 130px;
 }
@@ -348,6 +363,54 @@ h2 {
   color: var(--ink);
 }
 
+.entry-list {
+  display: grid;
+  gap: 10px;
+}
+
+.entry-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbf7ec;
+  padding: 14px;
+}
+
+.entry-card div {
+  display: grid;
+  gap: 5px;
+}
+
+.entry-card strong {
+  color: var(--ink);
+}
+
+.entry-card span {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.accepted-card {
+  border-color: #b8d6b1;
+  background: var(--green-soft);
+}
+
+.approval-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.approval-actions span {
+  color: var(--green);
+  font-weight: 800;
+}
+
 @media (max-width: 760px) {
   .login-panel {
     grid-template-columns: 1fr;
@@ -360,8 +423,22 @@ h2 {
 
   .database-facts,
   .profile-form,
-  .compact-form {
+  .compact-form,
+  .entry-form {
     grid-template-columns: 1fr;
+  }
+
+  .entry-note {
+    grid-column: auto;
+  }
+
+  .entry-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .approval-actions {
+    justify-items: stretch;
   }
 
   .panel-heading {

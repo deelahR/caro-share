@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
 type Owner = {
   name: string;
@@ -31,12 +31,40 @@ type Notification = {
   message: string;
 };
 
+type BusinessEntry = {
+  id: number;
+  entryType: string;
+  category: string;
+  amount: number;
+  quantity: string;
+  ownerName: string;
+  createdBy: string;
+  entryDate: string;
+  note: string;
+  status: "pending" | "accepted";
+  approvalCount: number;
+  approvedBy: string[];
+  createdAt: string;
+};
+
+type EntriesData = {
+  categories: Record<string, string[]>;
+  pending: BusinessEntry[];
+  accepted: BusinessEntry[];
+};
+
 const owners: Owner[] = [
   { name: "Anish" },
   { name: "Anoup" },
   { name: "Shivam" },
   { name: "Inben" },
 ];
+
+const entryTypeLabels: Record<string, string> = {
+  investment: "Investment",
+  expense: "Expense",
+  sale: "Sale",
+};
 
 const ownerSessionKey = "agribro-owner-session";
 
@@ -57,15 +85,22 @@ export default function Home() {
   const [securityMessage, setSecurityMessage] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [entriesData, setEntriesData] = useState<EntriesData | null>(null);
+  const [selectedEntryType, setSelectedEntryType] = useState("expense");
+  const [isSavingEntry, setIsSavingEntry] = useState(false);
+  const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
 
-  function showNotification(tone: Notification["tone"], message: string) {
+  const showNotification = useCallback(
+    (tone: Notification["tone"], message: string) => {
     const id = Date.now();
 
     setNotification({ id, tone, message });
     window.setTimeout(() => {
       setNotification((current) => (current?.id === id ? null : current));
     }, 5000);
-  }
+    },
+    [],
+  );
 
   useEffect(() => {
     const savedOwner = window.localStorage.getItem(ownerSessionKey);
@@ -91,6 +126,18 @@ export default function Home() {
 
     setOwnerProfile(payload.profile);
   }
+
+  const loadEntries = useCallback(async () => {
+    const response = await fetch("/api/entries");
+    const payload = (await response.json()) as EntriesData & { error?: string };
+
+    if (!response.ok) {
+      showNotification("error", payload.error || "Entries could not be loaded.");
+      return;
+    }
+
+    setEntriesData(payload);
+  }, [showNotification]);
 
   async function loginOwner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -222,6 +269,83 @@ export default function Home() {
     event.currentTarget.reset();
   }
 
+  async function submitEntry(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    setIsSavingEntry(true);
+
+    try {
+      const response = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entryType: readText(form, "entryType"),
+          category: readText(form, "category"),
+          amount: readText(form, "amount"),
+          quantity: readText(form, "quantity"),
+          ownerName: readText(form, "ownerName"),
+          createdBy: activeOwner,
+          entryDate: readText(form, "entryDate"),
+          note: readText(form, "note"),
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        showNotification("error", payload.error || "Entry could not be saved.");
+        return;
+      }
+
+      showNotification(
+        "success",
+        "Entry submitted. It needs 2 owner approvals before it is accepted.",
+      );
+      event.currentTarget.reset();
+      setSelectedEntryType("expense");
+      await loadEntries();
+    } finally {
+      setIsSavingEntry(false);
+    }
+  }
+
+  async function approveEntry(entryId: number) {
+    setIsApprovingEntry(entryId);
+
+    try {
+      const response = await fetch("/api/entries/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entryId, ownerName: activeOwner }),
+      });
+      const payload = (await response.json()) as {
+        approval?: { status: "pending" | "accepted"; approvalCount: number };
+        entries?: EntriesData;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.approval) {
+        showNotification("error", payload.error || "Entry could not be approved.");
+        return;
+      }
+
+      if (payload.entries) {
+        setEntriesData(payload.entries);
+      } else {
+        await loadEntries();
+      }
+
+      showNotification(
+        "success",
+        payload.approval.status === "accepted"
+          ? "Entry accepted. It has 2 owner approvals."
+          : "Approval saved. One more owner approval is needed.",
+      );
+    } finally {
+      setIsApprovingEntry(null);
+    }
+  }
+
   async function refreshDatabaseStatus() {
     setIsCheckingDatabase(true);
 
@@ -260,9 +384,14 @@ export default function Home() {
       void Promise.resolve().then(() => {
         void refreshDatabaseStatus();
         void loadOwnerProfile(activeOwner);
+        void loadEntries();
       });
     }
-  }, [activeOwner]);
+  }, [activeOwner, loadEntries]);
+
+  const categories = entriesData?.categories ?? {};
+  const selectedCategories = categories[selectedEntryType] ?? [];
+  const today = new Date().toISOString().slice(0, 10);
 
   if (activeOwner) {
     return (
@@ -393,6 +522,158 @@ export default function Home() {
               {securityMessage}
             </p>
           )}
+        </section>
+        <section className="entry-panel" aria-label="Business entry form">
+          <div>
+            <p className="eyebrow">Business entries</p>
+            <h2>Add entry for approval</h2>
+            <p>
+              Real entries stay pending until at least 2 owners accept them.
+            </p>
+          </div>
+          <form className="entry-form" onSubmit={submitEntry}>
+            <label>
+              Entry type
+              <select
+                name="entryType"
+                onChange={(event) => setSelectedEntryType(event.target.value)}
+                value={selectedEntryType}
+              >
+                {Object.entries(entryTypeLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Category
+              <select name="category" required>
+                <option value="">Choose category</option>
+                {selectedCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Amount
+              <input
+                min="0.01"
+                name="amount"
+                placeholder="0.00"
+                required
+                step="0.01"
+                type="number"
+              />
+            </label>
+            <label>
+              Owner
+              <select name="ownerName" defaultValue={activeOwner} required>
+                {owners.map((owner) => (
+                  <option key={owner.name} value={owner.name}>
+                    {owner.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Date
+              <input defaultValue={today} name="entryDate" required type="date" />
+            </label>
+            <label>
+              Quantity
+              <input name="quantity" placeholder="Optional" />
+            </label>
+            <label className="entry-note">
+              Note
+              <input name="note" placeholder="Optional details" />
+            </label>
+            <button disabled={isSavingEntry} type="submit">
+              Submit entry
+            </button>
+          </form>
+        </section>
+        <section className="entry-panel" aria-label="Owner notifications">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Owner notifications</p>
+              <h2>Pending approvals</h2>
+              <p>
+                {entriesData?.pending.length
+                  ? `${entriesData.pending.length} entry needs owner approval.`
+                  : "No entries are waiting for approval."}
+              </p>
+            </div>
+            <span className="role-badge">2 approvals required</span>
+          </div>
+          <div className="entry-list">
+            {entriesData?.pending.map((entry) => (
+              <article className="entry-card" key={entry.id}>
+                <div>
+                  <strong>
+                    {entryTypeLabels[entry.entryType]} - {entry.category}
+                  </strong>
+                  <span>
+                    Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
+                    {entry.entryDate}
+                  </span>
+                  {entry.quantity && <span>Quantity: {entry.quantity}</span>}
+                  {entry.note && <span>Note: {entry.note}</span>}
+                  <span>
+                    Submitted by {entry.createdBy}. Approved by{" "}
+                    {entry.approvedBy.length ? entry.approvedBy.join(", ") : "none"}.
+                  </span>
+                </div>
+                <div className="approval-actions">
+                  <span>{entry.approvalCount}/2 accepted</span>
+                  <button
+                    disabled={
+                      isApprovingEntry === entry.id ||
+                      entry.approvedBy.includes(activeOwner)
+                    }
+                    onClick={() => approveEntry(entry.id)}
+                    type="button"
+                  >
+                    {entry.approvedBy.includes(activeOwner)
+                      ? "Accepted"
+                      : "Accept"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="entry-panel" aria-label="Accepted entries">
+          <div>
+            <p className="eyebrow">Accepted database</p>
+            <h2>Accepted entries</h2>
+            <p>
+              These entries have at least 2 owner approvals and are ready for
+              reports.
+            </p>
+          </div>
+          <div className="entry-list">
+            {entriesData?.accepted.length ? (
+              entriesData.accepted.map((entry) => (
+                <article className="entry-card accepted-card" key={entry.id}>
+                  <div>
+                    <strong>
+                      {entryTypeLabels[entry.entryType]} - {entry.category}
+                    </strong>
+                    <span>
+                      Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
+                      {entry.entryDate}
+                    </span>
+                  </div>
+                  <span>{entry.approvalCount}/2 accepted</span>
+                </article>
+              ))
+            ) : (
+              <p>No accepted entries yet.</p>
+            )}
+          </div>
         </section>
         <section className="database-panel" aria-label="Database status">
           <div>
