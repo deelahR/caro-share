@@ -99,6 +99,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Pending approvals/);
   assert.match(page, /Equipment register/);
   assert.match(page, /Available and upcoming equipment/);
+  assert.match(page, /Search equipment/);
+  assert.match(page, /visibleAvailableEquipment/);
+  assert.match(page, /status-pill/);
   assert.match(page, /capture="environment"/);
   assert.match(page, /2 owner approvals/);
   assert.match(page, /Database system/);

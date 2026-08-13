@@ -429,6 +429,83 @@ h2 {
   font-size: 1rem;
 }
 
+.search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+  padding: 14px;
+}
+
+.search-row span,
+.result-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.result-count {
+  margin: -4px 0 10px;
+}
+
+.equipment-card {
+  align-items: stretch;
+  border-width: 2px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(29, 42, 35, 0.08);
+}
+
+.available-equipment {
+  border-color: #a9cfa8;
+}
+
+.upcoming-equipment {
+  border-color: #b9cbe0;
+}
+
+.equipment-card-main {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+}
+
+.equipment-card-main > div {
+  align-content: start;
+}
+
+.equipment-card .equipment-photo {
+  width: 128px;
+  height: 104px;
+  background: var(--field);
+}
+
+.status-pill {
+  width: max-content;
+  border: 1px solid #a9cfa8;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 4px 8px;
+  text-transform: uppercase;
+}
+
+.upcoming-pill {
+  border-color: #b9cbe0;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.equipment-meta {
+  color: var(--ink) !important;
+  font-weight: 800;
+}
+
 .account-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -627,6 +704,10 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+
   .database-facts,
   .profile-form,
   .compact-form,
@@ -650,6 +731,15 @@ h2 {
   .entry-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .equipment-card-main {
+    grid-template-columns: 1fr;
+  }
+
+  .equipment-card .equipment-photo {
+    width: 100%;
+    height: 180px;
   }
 
   .approval-actions {

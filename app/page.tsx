@@ -129,6 +129,7 @@ export default function Home() {
   const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
   const [equipmentImage, setEquipmentImage] = useState("");
+  const [equipmentSearch, setEquipmentSearch] = useState("");
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
@@ -520,6 +521,28 @@ export default function Home() {
   const acceptedCount = entriesData?.accepted.length ?? 0;
   const equipmentCount =
     (equipmentData?.available.length ?? 0) + (equipmentData?.upcoming.length ?? 0);
+  const normalizedEquipmentSearch = equipmentSearch.trim().toLowerCase();
+  const filterEquipment = (items: EquipmentItem[]) =>
+    normalizedEquipmentSearch
+      ? items.filter((item) =>
+          [
+            item.name,
+            item.ownerName,
+            item.note,
+            item.status,
+            item.targetDate,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedEquipmentSearch),
+        )
+      : items;
+  const visibleAvailableEquipment = filterEquipment(
+    equipmentData?.available ?? [],
+  );
+  const visibleUpcomingEquipment = filterEquipment(equipmentData?.upcoming ?? []);
+  const visibleEquipmentCount =
+    visibleAvailableEquipment.length + visibleUpcomingEquipment.length;
   const totalAccepted = entriesData?.accepted.reduce(
     (sum, entry) => sum + entry.amount,
     0,
@@ -782,6 +805,20 @@ export default function Home() {
                   investments.
                 </p>
               </div>
+              <div className="search-row">
+                <label>
+                  Search equipment
+                  <input
+                    onChange={(event) => setEquipmentSearch(event.target.value)}
+                    placeholder="Search by name, owner, note, or date"
+                    type="search"
+                    value={equipmentSearch}
+                  />
+                </label>
+                <span>
+                  Showing {visibleEquipmentCount} of {equipmentCount} items
+                </span>
+              </div>
               <form className="entry-form" onSubmit={submitEquipment}>
                 <label>
                   Equipment name
@@ -868,12 +905,18 @@ export default function Home() {
               <div className="equipment-grid">
                 <div>
                   <h3>Available equipment</h3>
+                  <p className="result-count">
+                    {visibleAvailableEquipment.length} result
+                    {visibleAvailableEquipment.length === 1 ? "" : "s"}
+                  </p>
                   <div className="entry-list">
-                    {equipmentData?.available.length ? (
-                      equipmentData.available.map((item) => (
-                        <article className="entry-card accepted-card" key={item.id}>
-                          <div>
-                            <strong>{item.name}</strong>
+                    {visibleAvailableEquipment.length ? (
+                      visibleAvailableEquipment.map((item) => (
+                        <article
+                          className="entry-card equipment-card available-equipment"
+                          key={item.id}
+                        >
+                          <div className="equipment-card-main">
                             {item.imageData && (
                               <img
                                 alt={`${item.name} equipment`}
@@ -881,13 +924,19 @@ export default function Home() {
                                 src={item.imageData}
                               />
                             )}
-                            <span>
-                              Qty {item.quantity} - Rs{" "}
-                              {item.estimatedCost.toFixed(2)}
-                            </span>
-                            <span>Responsible: {item.ownerName}</span>
-                            {item.targetDate && <span>Date: {item.targetDate}</span>}
-                            {item.note && <span>Note: {item.note}</span>}
+                            <div>
+                              <span className="status-pill">Available</span>
+                              <strong>{item.name}</strong>
+                              <span className="equipment-meta">
+                                Qty {item.quantity} | Rs{" "}
+                                {item.estimatedCost.toFixed(2)}
+                              </span>
+                              <span>Responsible: {item.ownerName}</span>
+                              {item.targetDate && (
+                                <span>Date: {item.targetDate}</span>
+                              )}
+                              {item.note && <span>Note: {item.note}</span>}
+                            </div>
                           </div>
                         </article>
                       ))
@@ -898,12 +947,18 @@ export default function Home() {
                 </div>
                 <div>
                   <h3>Upcoming equipment</h3>
+                  <p className="result-count">
+                    {visibleUpcomingEquipment.length} result
+                    {visibleUpcomingEquipment.length === 1 ? "" : "s"}
+                  </p>
                   <div className="entry-list">
-                    {equipmentData?.upcoming.length ? (
-                      equipmentData.upcoming.map((item) => (
-                        <article className="entry-card" key={item.id}>
-                          <div>
-                            <strong>{item.name}</strong>
+                    {visibleUpcomingEquipment.length ? (
+                      visibleUpcomingEquipment.map((item) => (
+                        <article
+                          className="entry-card equipment-card upcoming-equipment"
+                          key={item.id}
+                        >
+                          <div className="equipment-card-main">
                             {item.imageData && (
                               <img
                                 alt={`${item.name} equipment`}
@@ -911,15 +966,21 @@ export default function Home() {
                                 src={item.imageData}
                               />
                             )}
-                            <span>
-                              Qty {item.quantity} - estimated Rs{" "}
-                              {item.estimatedCost.toFixed(2)}
-                            </span>
-                            <span>Responsible: {item.ownerName}</span>
-                            {item.targetDate && (
-                              <span>Target date: {item.targetDate}</span>
-                            )}
-                            {item.note && <span>Note: {item.note}</span>}
+                            <div>
+                              <span className="status-pill upcoming-pill">
+                                Upcoming
+                              </span>
+                              <strong>{item.name}</strong>
+                              <span className="equipment-meta">
+                                Qty {item.quantity} | estimated Rs{" "}
+                                {item.estimatedCost.toFixed(2)}
+                              </span>
+                              <span>Responsible: {item.ownerName}</span>
+                              {item.targetDate && (
+                                <span>Target date: {item.targetDate}</span>
+                              )}
+                              {item.note && <span>Note: {item.note}</span>}
+                            </div>
                           </div>
                         </article>
                       ))
