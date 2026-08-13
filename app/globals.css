@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f3ea;
-  --foreground: #202421;
-  --muted: #687168;
-  --panel: #fffdf6;
-  --line: #d9d4c7;
-  --field: #fdfaf1;
-  --green: #1e5536;
+  --background: #eef1ed;
+  --foreground: #17211d;
+  --muted: #63706a;
+  --panel: #ffffff;
+  --line: #d8ded8;
+  --field: #f8faf7;
+  --green: #195c3a;
   --green-soft: #eef6ec;
+  --blue: #244b6f;
+  --blue-soft: #edf4fb;
   --red: #b84f47;
   --ink: #171a18;
 }
@@ -31,11 +33,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    linear-gradient(90deg, rgba(30, 85, 54, 0.06) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(30, 85, 54, 0.05) 1px, transparent 1px),
-    var(--background);
-  background-size: 44px 44px;
+  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -136,9 +134,13 @@ h2 {
 }
 
 .app-shell {
-  align-content: center;
+  align-content: start;
   justify-items: center;
   gap: 16px;
+}
+
+.app-shell {
+  padding-block: 28px;
 }
 
 .login-panel,
@@ -155,9 +157,42 @@ h2 {
 }
 
 .login-panel {
+  width: min(1040px, 100%);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.65fr) minmax(260px, 0.65fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 0.7fr);
   gap: 28px;
+  padding: 0;
+}
+
+.login-copy {
+  display: grid;
+  align-content: center;
+  min-height: 520px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f7f1 100%);
+  box-shadow: 0 20px 50px rgba(55, 45, 28, 0.1);
+  padding: 34px;
+}
+
+.auth-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 16px 36px rgba(29, 42, 35, 0.1);
+  padding: 24px;
+}
+
+.secondary-auth {
+  background: #fbfcfb;
 }
 
 .start-panel {
@@ -180,6 +215,106 @@ h2 {
   margin-bottom: 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.workspace-shell {
+  display: grid;
+  width: min(1120px, 100%);
+  gap: 16px;
+}
+
+.workspace-header,
+.content-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 14px 32px rgba(29, 42, 35, 0.09);
+  padding: 24px;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.workspace-header h1 {
+  font-size: clamp(2.4rem, 5vw, 4.1rem);
+}
+
+.owner-chip {
+  display: grid;
+  min-width: 160px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+.owner-chip small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.workspace-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 8px;
+}
+
+.workspace-nav button {
+  min-height: 38px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.92rem;
+  padding-inline: 12px;
+}
+
+.workspace-nav button:hover,
+.workspace-nav .nav-active {
+  border-color: var(--line);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.workspace-nav .logout-button {
+  margin-left: auto;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-grid div {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 18px;
+}
+
+.metric-grid span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metric-grid strong {
+  color: var(--ink);
+  font-size: 1.55rem;
 }
 
 .panel-heading {
@@ -245,6 +380,17 @@ h2 {
 
 .entry-note {
   grid-column: span 2;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.security-panel {
+  border-color: #d9c7c3;
+  background: linear-gradient(180deg, #ffffff 0%, #fff8f7 100%);
 }
 
 .compact-form {
@@ -416,9 +562,22 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .start-panel {
+  .login-copy {
+    min-height: auto;
+  }
+
+  .start-panel,
+  .workspace-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .workspace-nav .logout-button {
+    margin-left: 0;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
   }
 
   .database-facts,

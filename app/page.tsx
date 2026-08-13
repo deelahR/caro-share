@@ -53,6 +53,8 @@ type EntriesData = {
   accepted: BusinessEntry[];
 };
 
+type AppSection = "entries" | "approvals" | "records" | "account" | "system";
+
 const owners: Owner[] = [
   { name: "Anish" },
   { name: "Anoup" },
@@ -74,6 +76,7 @@ function readText(form: FormData, key: string) {
 
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
+  const [activeSection, setActiveSection] = useState<AppSection>("entries");
   const [ownerProfile, setOwnerProfile] = useState<OwnerProfile | null>(null);
   const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus | null>(
     null,
@@ -377,6 +380,7 @@ export default function Home() {
     setProfileMessage("");
     setSecurityMessage("");
     setNotification(null);
+    setActiveSection("entries");
   }
 
   useEffect(() => {
@@ -392,6 +396,12 @@ export default function Home() {
   const categories = entriesData?.categories ?? {};
   const selectedCategories = categories[selectedEntryType] ?? [];
   const today = new Date().toISOString().slice(0, 10);
+  const pendingCount = entriesData?.pending.length ?? 0;
+  const acceptedCount = entriesData?.accepted.length ?? 0;
+  const totalAccepted = entriesData?.accepted.reduce(
+    (sum, entry) => sum + entry.amount,
+    0,
+  ) ?? 0;
 
   if (activeOwner) {
     return (
@@ -411,321 +421,399 @@ export default function Home() {
             </button>
           </div>
         )}
-        <section className="start-panel" aria-label="Owner start screen">
-          <div>
-            <p className="eyebrow">Owner workspace</p>
-            <h1>AgriBro</h1>
-            <p className="intro">
-              Signed in as {ownerProfile?.displayName || activeOwner}. Manage
-              your owner profile and security before the business tools are
-              added.
-            </p>
-          </div>
-          <button className="logout-button" onClick={logoutOwner} type="button">
-            Log out
-          </button>
-        </section>
-        <section className="profile-panel" aria-label="Owner profile">
-          <div className="panel-heading">
+        <section className="workspace-shell" aria-label="Owner workspace">
+          <header className="workspace-header">
             <div>
-              <p className="eyebrow">Owner profile</p>
-              <h2>{ownerProfile?.displayName || activeOwner}</h2>
-              <p>Each owner has a separate profile stored in the database.</p>
-            </div>
-            <span className="role-badge">{ownerProfile?.role || "Owner"}</span>
-          </div>
-          <form
-            className="profile-form"
-            key={ownerProfile?.updatedAt || activeOwner}
-            onSubmit={saveOwnerProfile}
-          >
-            <label>
-              Display name
-              <input
-                defaultValue={ownerProfile?.displayName || activeOwner}
-                name="displayName"
-                placeholder="Owner display name"
-              />
-            </label>
-            <label>
-              Phone
-              <input
-                defaultValue={ownerProfile?.phone || ""}
-                name="phone"
-                placeholder="Owner phone number"
-                type="tel"
-              />
-            </label>
-            <label>
-              Email
-              <input
-                defaultValue={ownerProfile?.email || ""}
-                name="email"
-                placeholder="Owner email"
-                type="email"
-              />
-            </label>
-            <button disabled={isSavingProfile} type="submit">
-              Save profile
-            </button>
-          </form>
-          {profileMessage && (
-            <p
-              className={
-                profileMessage.includes("saved") ? "form-success" : "form-error"
-              }
-            >
-              {profileMessage}
-            </p>
-          )}
-        </section>
-        <section className="profile-panel" aria-label="Owner security">
-          <div>
-            <p className="eyebrow">Security</p>
-            <h2>Change PIN</h2>
-            <p>Update your owner PIN after signing in with the current one.</p>
-          </div>
-          <form className="profile-form compact-form" onSubmit={changePin}>
-            <label>
-              Current PIN
-              <input
-                autoComplete="current-password"
-                inputMode="numeric"
-                maxLength={8}
-                name="currentPin"
-                placeholder="Current PIN"
-                type="password"
-              />
-            </label>
-            <label>
-              New PIN
-              <input
-                autoComplete="new-password"
-                inputMode="numeric"
-                maxLength={8}
-                minLength={4}
-                name="newPin"
-                placeholder="New PIN"
-                type="password"
-              />
-            </label>
-            <button type="submit">Change PIN</button>
-          </form>
-          {securityMessage && (
-            <p
-              className={
-                securityMessage.includes("changed")
-                  ? "form-success"
-                  : "form-error"
-              }
-            >
-              {securityMessage}
-            </p>
-          )}
-        </section>
-        <section className="entry-panel" aria-label="Business entry form">
-          <div>
-            <p className="eyebrow">Business entries</p>
-            <h2>Add entry for approval</h2>
-            <p>
-              Real entries stay pending until at least 2 owners accept them.
-            </p>
-          </div>
-          <form className="entry-form" onSubmit={submitEntry}>
-            <label>
-              Entry type
-              <select
-                name="entryType"
-                onChange={(event) => setSelectedEntryType(event.target.value)}
-                value={selectedEntryType}
-              >
-                {Object.entries(entryTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Category
-              <select name="category" required>
-                <option value="">Choose category</option>
-                {selectedCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Amount
-              <input
-                min="0.01"
-                name="amount"
-                placeholder="0.00"
-                required
-                step="0.01"
-                type="number"
-              />
-            </label>
-            <label>
-              Owner
-              <select name="ownerName" defaultValue={activeOwner} required>
-                {owners.map((owner) => (
-                  <option key={owner.name} value={owner.name}>
-                    {owner.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Date
-              <input defaultValue={today} name="entryDate" required type="date" />
-            </label>
-            <label>
-              Quantity
-              <input name="quantity" placeholder="Optional" />
-            </label>
-            <label className="entry-note">
-              Note
-              <input name="note" placeholder="Optional details" />
-            </label>
-            <button disabled={isSavingEntry} type="submit">
-              Submit entry
-            </button>
-          </form>
-        </section>
-        <section className="entry-panel" aria-label="Owner notifications">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Owner notifications</p>
-              <h2>Pending approvals</h2>
-              <p>
-                {entriesData?.pending.length
-                  ? `${entriesData.pending.length} entry needs owner approval.`
-                  : "No entries are waiting for approval."}
+              <p className="eyebrow">Owner portal</p>
+              <h1>AgriBro</h1>
+              <p className="intro">
+                Signed in as {ownerProfile?.displayName || activeOwner}. Submit
+                business entries, review approvals, and manage your account.
               </p>
             </div>
-            <span className="role-badge">2 approvals required</span>
-          </div>
-          <div className="entry-list">
-            {entriesData?.pending.map((entry) => (
-              <article className="entry-card" key={entry.id}>
-                <div>
-                  <strong>
-                    {entryTypeLabels[entry.entryType]} - {entry.category}
-                  </strong>
-                  <span>
-                    Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
-                    {entry.entryDate}
-                  </span>
-                  {entry.quantity && <span>Quantity: {entry.quantity}</span>}
-                  {entry.note && <span>Note: {entry.note}</span>}
-                  <span>
-                    Submitted by {entry.createdBy}. Approved by{" "}
-                    {entry.approvedBy.length ? entry.approvedBy.join(", ") : "none"}.
-                  </span>
-                </div>
-                <div className="approval-actions">
-                  <span>{entry.approvalCount}/2 accepted</span>
-                  <button
-                    disabled={
-                      isApprovingEntry === entry.id ||
-                      entry.approvedBy.includes(activeOwner)
-                    }
-                    onClick={() => approveEntry(entry.id)}
-                    type="button"
-                  >
-                    {entry.approvedBy.includes(activeOwner)
-                      ? "Accepted"
-                      : "Accept"}
-                  </button>
-                </div>
-              </article>
+            <div className="owner-chip">
+              <span>{ownerProfile?.displayName || activeOwner}</span>
+              <small>{ownerProfile?.role || "Owner"}</small>
+            </div>
+          </header>
+
+          <nav className="workspace-nav" aria-label="Workspace navigation">
+            {[
+              ["entries", "New entry"],
+              ["approvals", `Approvals (${pendingCount})`],
+              ["records", "Accepted records"],
+              ["account", "Account"],
+              ["system", "System"],
+            ].map(([section, label]) => (
+              <button
+                aria-current={activeSection === section ? "page" : undefined}
+                className={activeSection === section ? "nav-active" : ""}
+                key={section}
+                onClick={() => setActiveSection(section as AppSection)}
+                type="button"
+              >
+                {label}
+              </button>
             ))}
-          </div>
-        </section>
-        <section className="entry-panel" aria-label="Accepted entries">
-          <div>
-            <p className="eyebrow">Accepted database</p>
-            <h2>Accepted entries</h2>
-            <p>
-              These entries have at least 2 owner approvals and are ready for
-              reports.
-            </p>
-          </div>
-          <div className="entry-list">
-            {entriesData?.accepted.length ? (
-              entriesData.accepted.map((entry) => (
-                <article className="entry-card accepted-card" key={entry.id}>
+            <button className="logout-button" onClick={logoutOwner} type="button">
+              Log out
+            </button>
+          </nav>
+
+          <section className="metric-grid" aria-label="Business summary">
+            <div>
+              <span>Pending approvals</span>
+              <strong>{pendingCount}</strong>
+            </div>
+            <div>
+              <span>Accepted records</span>
+              <strong>{acceptedCount}</strong>
+            </div>
+            <div>
+              <span>Accepted amount</span>
+              <strong>Rs {totalAccepted.toFixed(2)}</strong>
+            </div>
+          </section>
+
+          {activeSection === "entries" && (
+            <section className="content-panel" aria-label="Business entry form">
+              <div>
+                <p className="eyebrow">Business entries</p>
+                <h2>Add entry for approval</h2>
+                <p>
+                  Real entries stay pending until at least 2 owners accept
+                  them.
+                </p>
+              </div>
+              <form className="entry-form" onSubmit={submitEntry}>
+                <label>
+                  Entry type
+                  <select
+                    name="entryType"
+                    onChange={(event) => setSelectedEntryType(event.target.value)}
+                    value={selectedEntryType}
+                  >
+                    {Object.entries(entryTypeLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Category
+                  <select name="category" required>
+                    <option value="">Choose category</option>
+                    {selectedCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Amount
+                  <input
+                    min="0.01"
+                    name="amount"
+                    placeholder="0.00"
+                    required
+                    step="0.01"
+                    type="number"
+                  />
+                </label>
+                <label>
+                  Owner
+                  <select name="ownerName" defaultValue={activeOwner} required>
+                    {owners.map((owner) => (
+                      <option key={owner.name} value={owner.name}>
+                        {owner.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Date
+                  <input
+                    defaultValue={today}
+                    name="entryDate"
+                    required
+                    type="date"
+                  />
+                </label>
+                <label>
+                  Quantity
+                  <input name="quantity" placeholder="Optional" />
+                </label>
+                <label className="entry-note">
+                  Note
+                  <input name="note" placeholder="Optional details" />
+                </label>
+                <button disabled={isSavingEntry} type="submit">
+                  Submit entry
+                </button>
+              </form>
+            </section>
+          )}
+
+          {activeSection === "approvals" && (
+            <section className="content-panel" aria-label="Owner notifications">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Owner notifications</p>
+                  <h2>Pending approvals</h2>
+                  <p>
+                    {pendingCount
+                      ? `${pendingCount} entry needs owner approval.`
+                      : "No entries are waiting for approval."}
+                  </p>
+                </div>
+                <span className="role-badge">2 approvals required</span>
+              </div>
+              <div className="entry-list">
+                {entriesData?.pending.map((entry) => (
+                  <article className="entry-card" key={entry.id}>
+                    <div>
+                      <strong>
+                        {entryTypeLabels[entry.entryType]} - {entry.category}
+                      </strong>
+                      <span>
+                        Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
+                        {entry.entryDate}
+                      </span>
+                      {entry.quantity && <span>Quantity: {entry.quantity}</span>}
+                      {entry.note && <span>Note: {entry.note}</span>}
+                      <span>
+                        Submitted by {entry.createdBy}. Approved by{" "}
+                        {entry.approvedBy.length
+                          ? entry.approvedBy.join(", ")
+                          : "none"}
+                        .
+                      </span>
+                    </div>
+                    <div className="approval-actions">
+                      <span>{entry.approvalCount}/2 accepted</span>
+                      <button
+                        disabled={
+                          isApprovingEntry === entry.id ||
+                          entry.approvedBy.includes(activeOwner)
+                        }
+                        onClick={() => approveEntry(entry.id)}
+                        type="button"
+                      >
+                        {entry.approvedBy.includes(activeOwner)
+                          ? "Accepted"
+                          : "Accept"}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {activeSection === "records" && (
+            <section className="content-panel" aria-label="Accepted entries">
+              <div>
+                <p className="eyebrow">Accepted database</p>
+                <h2>Accepted entries</h2>
+                <p>
+                  These entries have at least 2 owner approvals and are ready
+                  for reports.
+                </p>
+              </div>
+              <div className="entry-list">
+                {entriesData?.accepted.length ? (
+                  entriesData.accepted.map((entry) => (
+                    <article className="entry-card accepted-card" key={entry.id}>
+                      <div>
+                        <strong>
+                          {entryTypeLabels[entry.entryType]} - {entry.category}
+                        </strong>
+                        <span>
+                          Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
+                          {entry.entryDate}
+                        </span>
+                      </div>
+                      <span>{entry.approvalCount}/2 accepted</span>
+                    </article>
+                  ))
+                ) : (
+                  <p>No accepted entries yet.</p>
+                )}
+              </div>
+            </section>
+          )}
+
+          {activeSection === "account" && (
+            <section className="account-grid" aria-label="Owner account">
+              <div className="content-panel">
+                <div className="panel-heading">
                   <div>
-                    <strong>
-                      {entryTypeLabels[entry.entryType]} - {entry.category}
-                    </strong>
-                    <span>
-                      Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
-                      {entry.entryDate}
-                    </span>
+                    <p className="eyebrow">Profile</p>
+                    <h2>{ownerProfile?.displayName || activeOwner}</h2>
+                    <p>
+                      Keep owner contact details separate from business entry
+                      records.
+                    </p>
                   </div>
-                  <span>{entry.approvalCount}/2 accepted</span>
-                </article>
-              ))
-            ) : (
-              <p>No accepted entries yet.</p>
-            )}
-          </div>
-        </section>
-        <section className="database-panel" aria-label="Database status">
-          <div>
-            <p className="eyebrow">Database system</p>
-            <h2>Shared storage</h2>
-            <p>
-              {databaseStatus?.message ??
-                "Checking database connection for AgriBro."}
-            </p>
-          </div>
-          <div className="database-facts">
-            <span>
-              Configured: <strong>{databaseStatus?.configured ? "Yes" : "No"}</strong>
-            </span>
-            <span>
-              Connected: <strong>{databaseStatus?.connected ? "Yes" : "No"}</strong>
-            </span>
-            <span>
-              Initialized:{" "}
-              <strong>{databaseStatus?.initialized ? "Yes" : "No"}</strong>
-            </span>
-            {databaseStatus?.databaseName && (
-              <span>
-                Database: <strong>{databaseStatus.databaseName}</strong>
-              </span>
-            )}
-            {databaseStatus?.ownerCount !== undefined && (
-              <span>
-                Owners saved: <strong>{databaseStatus.ownerCount}</strong>
-              </span>
-            )}
-          </div>
-          <div className="database-actions">
-            <button
-              disabled={isCheckingDatabase}
-              onClick={refreshDatabaseStatus}
-              type="button"
-            >
-              Check database
-            </button>
-            <button
-              disabled={
-                isCheckingDatabase ||
-                !databaseStatus?.configured ||
-                !databaseStatus?.connected
-              }
-              onClick={initializeDatabase}
-              type="button"
-            >
-              Initialize tables
-            </button>
-          </div>
+                  <span className="role-badge">
+                    {ownerProfile?.role || "Owner"}
+                  </span>
+                </div>
+                <form
+                  className="profile-form"
+                  key={ownerProfile?.updatedAt || activeOwner}
+                  onSubmit={saveOwnerProfile}
+                >
+                  <label>
+                    Display name
+                    <input
+                      defaultValue={ownerProfile?.displayName || activeOwner}
+                      name="displayName"
+                      placeholder="Owner display name"
+                    />
+                  </label>
+                  <label>
+                    Phone
+                    <input
+                      defaultValue={ownerProfile?.phone || ""}
+                      name="phone"
+                      placeholder="Owner phone number"
+                      type="tel"
+                    />
+                  </label>
+                  <label>
+                    Email
+                    <input
+                      defaultValue={ownerProfile?.email || ""}
+                      name="email"
+                      placeholder="Owner email"
+                      type="email"
+                    />
+                  </label>
+                  <button disabled={isSavingProfile} type="submit">
+                    Save profile
+                  </button>
+                </form>
+                {profileMessage && (
+                  <p
+                    className={
+                      profileMessage.includes("saved")
+                        ? "form-success"
+                        : "form-error"
+                    }
+                  >
+                    {profileMessage}
+                  </p>
+                )}
+              </div>
+              <div className="content-panel security-panel">
+                <div>
+                  <p className="eyebrow">Secure area</p>
+                  <h2>Change PIN</h2>
+                  <p>
+                    Security settings are kept away from daily entry work. Use
+                    this only when the owner is updating their own PIN.
+                  </p>
+                </div>
+                <form className="profile-form compact-form" onSubmit={changePin}>
+                  <label>
+                    Current PIN
+                    <input
+                      autoComplete="current-password"
+                      inputMode="numeric"
+                      maxLength={8}
+                      name="currentPin"
+                      placeholder="Current PIN"
+                      type="password"
+                    />
+                  </label>
+                  <label>
+                    New PIN
+                    <input
+                      autoComplete="new-password"
+                      inputMode="numeric"
+                      maxLength={8}
+                      minLength={4}
+                      name="newPin"
+                      placeholder="New PIN"
+                      type="password"
+                    />
+                  </label>
+                  <button type="submit">Change PIN</button>
+                </form>
+                {securityMessage && (
+                  <p
+                    className={
+                      securityMessage.includes("changed")
+                        ? "form-success"
+                        : "form-error"
+                    }
+                  >
+                    {securityMessage}
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+
+          {activeSection === "system" && (
+            <section className="content-panel" aria-label="Database status">
+              <div>
+                <p className="eyebrow">Database system</p>
+                <h2>Shared storage</h2>
+                <p>
+                  {databaseStatus?.message ??
+                    "Checking database connection for AgriBro."}
+                </p>
+              </div>
+              <div className="database-facts">
+                <span>
+                  Configured:{" "}
+                  <strong>{databaseStatus?.configured ? "Yes" : "No"}</strong>
+                </span>
+                <span>
+                  Connected:{" "}
+                  <strong>{databaseStatus?.connected ? "Yes" : "No"}</strong>
+                </span>
+                <span>
+                  Initialized:{" "}
+                  <strong>{databaseStatus?.initialized ? "Yes" : "No"}</strong>
+                </span>
+                {databaseStatus?.databaseName && (
+                  <span>
+                    Database: <strong>{databaseStatus.databaseName}</strong>
+                  </span>
+                )}
+                {databaseStatus?.ownerCount !== undefined && (
+                  <span>
+                    Owners saved: <strong>{databaseStatus.ownerCount}</strong>
+                  </span>
+                )}
+              </div>
+              <div className="database-actions">
+                <button
+                  disabled={isCheckingDatabase}
+                  onClick={refreshDatabaseStatus}
+                  type="button"
+                >
+                  Check database
+                </button>
+                <button
+                  disabled={
+                    isCheckingDatabase ||
+                    !databaseStatus?.configured ||
+                    !databaseStatus?.connected
+                  }
+                  onClick={initializeDatabase}
+                  type="button"
+                >
+                  Initialize tables
+                </button>
+              </div>
+            </section>
+          )}
         </section>
       </main>
     );
@@ -749,107 +837,97 @@ export default function Home() {
         </div>
       )}
       <section className="login-panel" aria-label="Owner login">
-        <div>
+        <div className="login-copy">
           <p className="eyebrow">Private owner portal</p>
           <h1>AgriBro</h1>
           <p className="intro">
-            Sign in as one of the owners. Owner PINs are checked against the
-            secure database before the workspace opens.
+            Secure access for the four owners to record investments, expenses,
+            sales, and approvals.
           </p>
         </div>
-        <form className="login-form" onSubmit={loginOwner}>
-          <h2>Owner login</h2>
-          <label>
-            Owner
-            <select name="owner" defaultValue="" required>
-              <option value="" disabled>
-                Choose owner
-              </option>
-              {owners.map((owner) => (
-                <option key={owner.name} value={owner.name}>
-                  {owner.name}
+        <div className="auth-stack">
+          <form className="login-form auth-card" onSubmit={loginOwner}>
+            <h2>Owner login</h2>
+            <label>
+              Owner
+              <select name="owner" defaultValue="" required>
+                <option value="" disabled>
+                  Choose owner
                 </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            PIN
-            <input
-              autoComplete="current-password"
-              inputMode="numeric"
-              maxLength={8}
-              minLength={4}
-              name="pin"
-              placeholder="Owner PIN"
-              type="password"
-            />
-          </label>
-          {loginError && <p className="form-error">{loginError}</p>}
-          <button type="submit">Log in</button>
-        </form>
-        <form
-          className="login-form recovery-form"
-          onSubmit={recoverPin}
-          aria-label="Recover PIN"
-        >
-          <h2>Recover PIN</h2>
-          <label>
-            Owner
-            <select name="recoveryOwner" defaultValue="" required>
-              <option value="" disabled>
-                Choose owner
-              </option>
-              {owners.map((owner) => (
-                <option key={owner.name} value={owner.name}>
-                  {owner.name}
+                {owners.map((owner) => (
+                  <option key={owner.name} value={owner.name}>
+                    {owner.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              PIN
+              <input
+                autoComplete="current-password"
+                inputMode="numeric"
+                maxLength={8}
+                minLength={4}
+                name="pin"
+                placeholder="Owner PIN"
+                type="password"
+              />
+            </label>
+            {loginError && <p className="form-error">{loginError}</p>}
+            <button type="submit">Log in</button>
+          </form>
+          <form
+            className="login-form auth-card secondary-auth"
+            onSubmit={recoverPin}
+            aria-label="Recover PIN"
+          >
+            <h2>Recover PIN</h2>
+            <label>
+              Owner
+              <select name="recoveryOwner" defaultValue="" required>
+                <option value="" disabled>
+                  Choose owner
                 </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Recovery code
-            <input
-              autoComplete="one-time-code"
-              name="recoveryCode"
-              placeholder="Recovery code"
-            />
-          </label>
-          <label>
-            New PIN
-            <input
-              autoComplete="new-password"
-              inputMode="numeric"
-              maxLength={8}
-              minLength={4}
-              name="recoveryPin"
-              placeholder="New PIN"
-              type="password"
-            />
-          </label>
-          {recoveryMessage && (
-            <p
-              className={
-                recoveryMessage.includes("reset") ? "form-success" : "form-error"
-              }
-            >
-              {recoveryMessage}
-            </p>
-          )}
-          <button type="submit">Reset PIN</button>
-        </form>
-        <div className="pin-list" aria-label="Initial owner PINs">
-          <strong>Initial setup PINs</strong>
-          <span>Anish 1111</span>
-          <span>Anoup 2222</span>
-          <span>Shivam 3333</span>
-          <span>Inben 4444</span>
-        </div>
-        <div className="pin-list" aria-label="Initial recovery codes">
-          <strong>Initial recovery codes</strong>
-          <span>Anish ANISH-2026</span>
-          <span>Anoup ANOUP-2026</span>
-          <span>Shivam SHIVAM-2026</span>
-          <span>Inben INBEN-2026</span>
+                {owners.map((owner) => (
+                  <option key={owner.name} value={owner.name}>
+                    {owner.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Recovery code
+              <input
+                autoComplete="one-time-code"
+                name="recoveryCode"
+                placeholder="Recovery code"
+              />
+            </label>
+            <label>
+              New PIN
+              <input
+                autoComplete="new-password"
+                inputMode="numeric"
+                maxLength={8}
+                minLength={4}
+                name="recoveryPin"
+                placeholder="New PIN"
+                type="password"
+              />
+            </label>
+            {recoveryMessage && (
+              <p
+                className={
+                  recoveryMessage.includes("reset")
+                    ? "form-success"
+                    : "form-error"
+                }
+              >
+                {recoveryMessage}
+              </p>
+            )}
+            <button type="submit">Reset PIN</button>
+          </form>
         </div>
       </section>
     </main>

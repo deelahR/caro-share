@@ -36,14 +36,12 @@ test("server-renders the owner login gate", async () => {
   assert.match(html, /Owner login/);
   assert.match(html, /Recover PIN/);
   assert.match(html, /Choose owner/);
-  assert.match(html, /Initial setup PINs/);
-  assert.match(html, /Initial recovery codes/);
-  assert.match(html, /secure database/);
+  assert.match(html, /Secure access/);
   assert.match(html, /Anish/);
   assert.match(html, /Anoup/);
   assert.match(html, /Shivam/);
   assert.match(html, /Inben/);
-  assert.match(html, /1111/);
+  assert.doesNotMatch(html, /Initial setup PINs|Initial recovery codes|1111|ANISH-2026/);
   assert.doesNotMatch(
     html,
     /Total investment|Add expense|Add sale|Land 1|Land 2|Profit due|Tomato early batch|Seeds and trays/,
@@ -91,6 +89,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /\/api\/entries\/approve/);
   assert.match(page, /Owner profile/);
   assert.match(page, /Change PIN/);
+  assert.match(page, /Secure area/);
+  assert.match(page, /workspace-nav/);
   assert.match(page, /Recover PIN/);
   assert.match(page, /Add entry for approval/);
   assert.match(page, /Pending approvals/);
