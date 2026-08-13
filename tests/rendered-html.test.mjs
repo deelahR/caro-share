@@ -122,6 +122,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /business_entries/);
   assert.match(postgres, /entry_approvals/);
   assert.match(postgres, /approvalCount >= 2/);
+  assert.match(postgres, /select id, created_by/);
+  assert.match(postgres, /approvalCount: 1/);
   assert.match(layout, /title:\s*"AgriBro"/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);

@@ -302,7 +302,7 @@ export default function Home() {
 
       showNotification(
         "success",
-        "Entry submitted. It needs 2 owner approvals before it is accepted.",
+        "Entry submitted. Your approval is counted; one more owner must accept it.",
       );
       event.currentTarget.reset();
       setSelectedEntryType("expense");
@@ -481,8 +481,8 @@ export default function Home() {
                 <p className="eyebrow">Business entries</p>
                 <h2>Add entry for approval</h2>
                 <p>
-                  Real entries stay pending until at least 2 owners accept
-                  them.
+                  Real entries stay pending until the submitter and one more
+                  owner accept them.
                 </p>
               </div>
               <form className="entry-form" onSubmit={submitEntry}>

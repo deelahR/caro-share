@@ -309,6 +309,22 @@ export async function initializeDatabase() {
         unique (entry_id, owner_name)
       )
     `);
+    await client.query(`
+      insert into entry_approvals (entry_id, owner_name)
+      select id, created_by
+      from business_entries
+      on conflict (entry_id, owner_name) do nothing
+    `);
+    await client.query(`
+      update business_entries
+      set status = 'accepted', accepted_at = coalesce(accepted_at, now())
+      where status = 'pending'
+        and (
+          select count(*)
+          from entry_approvals
+          where entry_approvals.entry_id = business_entries.id
+        ) >= 2
+    `);
 
     for (const owner of initialOwners) {
       const credentials = hashSecret(owner.pin);
@@ -634,13 +650,23 @@ export async function createBusinessEntry(entry: {
       entry.note,
     ],
   );
+  const entryId = Number(result.rows[0].id);
+
+  await getPool().query(
+    `
+      insert into entry_approvals (entry_id, owner_name)
+      values ($1, $2)
+      on conflict (entry_id, owner_name) do nothing
+    `,
+    [entryId, entry.createdBy],
+  );
 
   await getPool().query(
     "insert into app_events (owner_name, action) values ($1, $2)",
     [entry.createdBy, `Submitted ${entry.entryType} entry for approval`],
   );
 
-  return { id: Number(result.rows[0].id), status: "pending" as const };
+  return { id: entryId, status: "pending" as const, approvalCount: 1 };
 }
 
 export async function approveBusinessEntry(entryId: number, ownerName: string) {
