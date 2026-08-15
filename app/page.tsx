@@ -894,6 +894,48 @@ export default function Home() {
         equipmentDraft.note,
       ].join("|")
     : "blank-equipment";
+  function openShortcut(section: AppSection, equipmentSection?: EquipmentSection) {
+    setActiveSection(section);
+    if (section === "equipment") {
+      setActiveEquipmentSection(equipmentSection || "list");
+    }
+    setIsMenuOpen(false);
+    setIsNotificationOpen(false);
+  }
+
+  function openNotificationShortcut(message: string) {
+    const normalizedMessage = message.toLowerCase();
+
+    if (normalizedMessage.includes("equipment")) {
+      openShortcut(
+        normalizedMessage.includes("approved") ||
+          normalizedMessage.includes("added")
+          ? "equipment"
+          : "approvals",
+      );
+      return;
+    }
+
+    if (
+      normalizedMessage.includes("approval") ||
+      normalizedMessage.includes("requested") ||
+      normalizedMessage.includes("submitted")
+    ) {
+      openShortcut("approvals");
+      return;
+    }
+
+    if (
+      normalizedMessage.includes("accepted") ||
+      normalizedMessage.includes("saved")
+    ) {
+      openShortcut("records");
+      return;
+    }
+
+    openShortcut("approvals");
+  }
+
   const renderEquipmentCard = (item: EquipmentItem) => {
     const isUpcoming = item.status === "upcoming";
     const isDeletionPending = Boolean(item.deletionRequestId);
@@ -988,22 +1030,38 @@ export default function Home() {
   const totalAccepted = businessSummary?.acceptedAmount ?? derivedTotalAccepted;
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
-      <div>
+      <button
+        aria-label="Open approval requests"
+        onClick={() => openShortcut("approvals")}
+        type="button"
+      >
         <span>Approval requests</span>
         <strong>{approvalRequestCount}</strong>
-      </div>
-      <div>
+      </button>
+      <button
+        aria-label="Open accepted investment records"
+        onClick={() => openShortcut("records")}
+        type="button"
+      >
         <span>Accepted investment records</span>
         <strong>{acceptedCount}</strong>
-      </div>
-      <div>
+      </button>
+      <button
+        aria-label="Open accepted investment amount"
+        onClick={() => openShortcut("records")}
+        type="button"
+      >
         <span>Accepted amount</span>
         <strong>Rs {totalAccepted.toFixed(2)}</strong>
-      </div>
-      <div>
+      </button>
+      <button
+        aria-label="Open equipment items"
+        onClick={() => openShortcut("equipment", "list")}
+        type="button"
+      >
         <span>Equipment items</span>
         <strong>{equipmentCount}</strong>
-      </div>
+      </button>
     </section>
   );
   const notificationCenter = (
@@ -1074,15 +1132,23 @@ export default function Home() {
                     <span>{item.message}</span>
                     <small>{item.createdAt}</small>
                   </div>
-                  <button
-                    aria-label="Dismiss notification"
-                    onClick={() => {
-                      void dismissNotification(item.id);
-                    }}
-                    type="button"
-                  >
-                    X
-                  </button>
+                  <div className="notification-actions">
+                    <button
+                      onClick={() => openNotificationShortcut(item.message)}
+                      type="button"
+                    >
+                      Open
+                    </button>
+                    <button
+                      aria-label="Dismiss notification"
+                      onClick={() => {
+                        void dismissNotification(item.id);
+                      }}
+                      type="button"
+                    >
+                      X
+                    </button>
+                  </div>
                 </article>
               ))
             ) : (

@@ -127,6 +127,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /header-actions/);
   assert.match(page, /header-metric-grid/);
   assert.match(page, /Business summary/);
+  assert.match(page, /openShortcut/);
+  assert.match(page, /openNotificationShortcut/);
+  assert.match(page, /Open approval requests/);
+  assert.match(page, /Open equipment items/);
   assert.match(page, /bell-button/);
   assert.match(page, /notification-panel/);
   assert.match(page, /Clear all/);
@@ -218,6 +222,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);
   assert.match(globalsCss, /\.equipment-card-actions/);
   assert.match(globalsCss, /\.header-metric-grid/);
+  assert.match(globalsCss, /\.notification-actions/);
+  assert.match(globalsCss, /\.metric-grid button/);
   assert.doesNotMatch(globalsCss, /module-overview/);
   assert.match(postgres, /scryptSync/);
   assert.match(postgres, /timingSafeEqual/);

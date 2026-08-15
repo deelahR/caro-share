@@ -409,13 +409,21 @@ h2 {
   gap: 12px;
 }
 
-.metric-grid div {
+.metric-grid button {
   display: grid;
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+  color: inherit;
+  justify-items: start;
   padding: 18px;
+  text-align: left;
+}
+
+.metric-grid button:hover {
+  border-color: #a9cfa8;
+  background: var(--green-soft);
 }
 
 .metric-grid span {
@@ -435,7 +443,7 @@ h2 {
   gap: 8px;
 }
 
-.header-metric-grid div {
+.header-metric-grid button {
   align-content: center;
   background: #fbfcfb;
   min-height: 72px;
@@ -1053,7 +1061,7 @@ h2 {
   border-left-color: var(--blue);
 }
 
-.notification-item div {
+.notification-item > div:first-child {
   display: grid;
   gap: 4px;
 }
@@ -1071,16 +1079,22 @@ h2 {
   font-weight: 700;
 }
 
-.notification-item button {
-  min-width: 30px;
+.notification-actions {
+  display: grid;
+  gap: 6px;
+}
+
+.notification-actions button {
+  min-width: 44px;
   min-height: 30px;
   border: 1px solid var(--line);
   background: transparent;
   color: var(--muted);
-  padding: 0;
+  font-size: 0.78rem;
+  padding: 0 8px;
 }
 
-.notification-item button:hover {
+.notification-actions button:hover {
   background: #fbf7ec;
   color: var(--ink);
 }
@@ -1187,7 +1201,7 @@ h2 {
     width: 100%;
   }
 
-  .header-metric-grid div {
+  .header-metric-grid button {
     min-height: 64px;
     padding: 10px;
   }
@@ -1334,7 +1348,7 @@ h2 {
     gap: 8px;
   }
 
-  .metric-grid div {
+  .metric-grid button {
     padding: 14px;
   }
 
