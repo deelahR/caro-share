@@ -112,8 +112,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /dashboard-metric-grid/);
   assert.match(page, /dashboard-finance-grid/);
   assert.match(page, /dashboard-asset-grid/);
+  assert.match(page, /owner-summary-panel/);
+  assert.match(page, /owner-summary-grid/);
   assert.match(page, /dashboard-actions/);
-  assert.match(page, /Phase 3/);
+  assert.match(page, /Phase 4/);
   assert.match(page, /Total debit/);
   assert.match(page, /Total credit/);
   assert.match(page, /Net balance/);
@@ -122,6 +124,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Total asset value/);
   assert.match(page, /Available asset value/);
   assert.match(page, /Upcoming asset value/);
+  assert.match(page, /Owner summary/);
+  assert.match(page, /Accepted records and approved assets only/);
+  assert.match(page, /Net contribution/);
   assert.match(page, /menu-toggle/);
   assert.match(page, /menu-overlay/);
   assert.match(page, /workspace-nav-open/);
@@ -227,6 +232,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /totalAssetValue/);
   assert.match(postgres, /availableAssetValue/);
   assert.match(postgres, /upcomingAssetValue/);
+  assert.match(postgres, /ownerSummaries/);
+  assert.match(postgres, /netContribution/);
+  assert.match(postgres, /asset_value/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
@@ -250,6 +258,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.dashboard-metric-grid/);
   assert.match(globalsCss, /\.dashboard-finance-grid/);
   assert.match(globalsCss, /\.dashboard-asset-grid/);
+  assert.match(globalsCss, /\.owner-summary-panel/);
+  assert.match(globalsCss, /\.owner-summary-grid/);
   assert.match(globalsCss, /\.dashboard-actions/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);

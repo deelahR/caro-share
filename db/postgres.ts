@@ -13,6 +13,15 @@ export type DatabaseStatus = {
   message: string;
 };
 
+export type OwnerSummary = {
+  ownerName: string;
+  investment: number;
+  expense: number;
+  sale: number;
+  assetValue: number;
+  netContribution: number;
+};
+
 export type BusinessSummary = {
   approvalRequests: number;
   acceptedInvestmentRecords: number;
@@ -26,6 +35,7 @@ export type BusinessSummary = {
   availableAssetValue: number;
   upcomingAssetValue: number;
   equipmentItems: number;
+  ownerSummaries: OwnerSummary[];
 };
 
 export type OwnerProfile = {
@@ -996,6 +1006,39 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
       (select count(*) from equipment_add_requests where status = 'pending') as equipment_add_requests,
       (select count(*) from equipment_delete_requests where status = 'pending') as equipment_delete_requests
   `);
+  const ownerSummaryResult = await getPool().query<{
+    owner_name: string;
+    investment: string | null;
+    expense: string | null;
+    sale: string | null;
+    asset_value: string | null;
+  }>(`
+    with entry_totals as (
+      select
+        owner_name,
+        coalesce(sum(amount) filter (where entry_type = 'investment'), 0) as investment,
+        coalesce(sum(amount) filter (where entry_type = 'expense'), 0) as expense,
+        coalesce(sum(amount) filter (where entry_type = 'sale'), 0) as sale
+      from business_entries
+      where status = 'accepted'
+      group by owner_name
+    ),
+    asset_totals as (
+      select owner_name, coalesce(sum(estimated_cost), 0) as asset_value
+      from equipment_items
+      group by owner_name
+    )
+    select
+      owners.name as owner_name,
+      coalesce(entry_totals.investment, 0) as investment,
+      coalesce(entry_totals.expense, 0) as expense,
+      coalesce(entry_totals.sale, 0) as sale,
+      coalesce(asset_totals.asset_value, 0) as asset_value
+    from owners
+    left join entry_totals on entry_totals.owner_name = owners.name
+    left join asset_totals on asset_totals.owner_name = owners.name
+    order by owners.name
+  `);
   const summary = result.rows[0];
   const approvalRequests =
     Number(summary.pending_entries || 0) +
@@ -1003,6 +1046,21 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     Number(summary.equipment_delete_requests || 0);
   const totalDebit = Number(summary.total_debit || 0);
   const totalCredit = Number(summary.total_credit || 0);
+  const ownerSummaries = ownerSummaryResult.rows.map((row) => {
+    const investment = Number(row.investment || 0);
+    const expense = Number(row.expense || 0);
+    const sale = Number(row.sale || 0);
+    const assetValue = Number(row.asset_value || 0);
+
+    return {
+      ownerName: row.owner_name,
+      investment,
+      expense,
+      sale,
+      assetValue,
+      netContribution: investment + sale + assetValue - expense,
+    };
+  });
 
   return {
     approvalRequests,
@@ -1017,6 +1075,7 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     availableAssetValue: Number(summary.available_asset_value || 0),
     upcomingAssetValue: Number(summary.upcoming_asset_value || 0),
     equipmentItems: Number(summary.equipment_items || 0),
+    ownerSummaries,
   };
 }
 

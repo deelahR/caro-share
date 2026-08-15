@@ -27,6 +27,15 @@ type DatabaseStatus = {
   message: string;
 };
 
+type OwnerSummary = {
+  ownerName: string;
+  investment: number;
+  expense: number;
+  sale: number;
+  assetValue: number;
+  netContribution: number;
+};
+
 type BusinessSummary = {
   approvalRequests: number;
   acceptedInvestmentRecords: number;
@@ -40,6 +49,7 @@ type BusinessSummary = {
   availableAssetValue: number;
   upcomingAssetValue: number;
   equipmentItems: number;
+  ownerSummaries: OwnerSummary[];
 };
 
 type Notification = {
@@ -1080,6 +1090,42 @@ export default function Home() {
     businessSummary?.availableAssetValue ?? derivedAvailableAssetValue;
   const upcomingAssetValue =
     businessSummary?.upcomingAssetValue ?? derivedUpcomingAssetValue;
+  const derivedOwnerSummaries = owners.map<OwnerSummary>((owner) => {
+    const ownerEntries =
+      entriesData?.accepted.filter((entry) => entry.ownerName === owner.name) ??
+      [];
+    const ownerEquipment = approvedEquipment.filter(
+      (item) => item.ownerName === owner.name,
+    );
+    const investment = ownerEntries.reduce(
+      (sum, entry) =>
+        sum + (entry.entryType === "investment" ? entry.amount : 0),
+      0,
+    );
+    const expense = ownerEntries.reduce(
+      (sum, entry) => sum + (entry.entryType === "expense" ? entry.amount : 0),
+      0,
+    );
+    const sale = ownerEntries.reduce(
+      (sum, entry) => sum + (entry.entryType === "sale" ? entry.amount : 0),
+      0,
+    );
+    const assetValue = ownerEquipment.reduce(
+      (sum, item) => sum + item.estimatedCost,
+      0,
+    );
+
+    return {
+      ownerName: owner.name,
+      investment,
+      expense,
+      sale,
+      assetValue,
+      netContribution: investment + sale + assetValue - expense,
+    };
+  });
+  const ownerSummaries =
+    businessSummary?.ownerSummaries ?? derivedOwnerSummaries;
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
       <button
@@ -1411,7 +1457,7 @@ export default function Home() {
                     balance, and approved assets.
                   </p>
                 </div>
-                <span className="role-badge">Phase 3</span>
+                <span className="role-badge">Phase 4</span>
               </div>
               <div className="metric-grid dashboard-metric-grid">
                 <button
@@ -1514,6 +1560,49 @@ export default function Home() {
                   <span>Upcoming asset value</span>
                   <strong>Rs {upcomingAssetValue.toFixed(2)}</strong>
                 </button>
+              </div>
+              <div className="owner-summary-panel">
+                <div className="owner-summary-heading">
+                  <div>
+                    <h3>Owner summary</h3>
+                    <span>Accepted records and approved assets only</span>
+                  </div>
+                  <button onClick={() => openShortcut("records")} type="button">
+                    View records
+                  </button>
+                </div>
+                <div className="owner-summary-grid">
+                  {ownerSummaries.map((summary) => (
+                    <article
+                      className="owner-summary-card"
+                      key={summary.ownerName}
+                    >
+                      <strong>{summary.ownerName}</strong>
+                      <div>
+                        <span>
+                          Investment
+                          <b>Rs {summary.investment.toFixed(2)}</b>
+                        </span>
+                        <span>
+                          Expense
+                          <b>Rs {summary.expense.toFixed(2)}</b>
+                        </span>
+                        <span>
+                          Sale
+                          <b>Rs {summary.sale.toFixed(2)}</b>
+                        </span>
+                        <span>
+                          Asset value
+                          <b>Rs {summary.assetValue.toFixed(2)}</b>
+                        </span>
+                        <span className="owner-net">
+                          Net contribution
+                          <b>Rs {summary.netContribution.toFixed(2)}</b>
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
               </div>
               <div className="dashboard-actions">
                 <button onClick={() => openShortcut("entries")} type="button">
