@@ -31,6 +31,7 @@ type Notification = {
   id: number;
   tone: "success" | "error";
   message: string;
+  createdAt: string;
 };
 
 type BusinessEntry = {
@@ -140,7 +141,8 @@ export default function Home() {
   const [profileMessage, setProfileMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
-  const [notification, setNotification] = useState<Notification | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [entriesData, setEntriesData] = useState<EntriesData | null>(null);
   const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
@@ -157,12 +159,19 @@ export default function Home() {
 
   const showNotification = useCallback(
     (tone: Notification["tone"], message: string) => {
-      const id = Date.now();
-
-      setNotification({ id, tone, message });
-      window.setTimeout(() => {
-        setNotification((current) => (current?.id === id ? null : current));
-      }, 5000);
+      setNotifications((current) => [
+        {
+          id: Date.now(),
+          tone,
+          message,
+          createdAt: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+        ...current,
+      ].slice(0, 12));
+      setIsNotificationOpen(true);
     },
     [],
   );
@@ -560,7 +569,8 @@ export default function Home() {
     setOwnerProfile(null);
     setProfileMessage("");
     setSecurityMessage("");
-    setNotification(null);
+    setNotifications([]);
+    setIsNotificationOpen(false);
     setActiveSection("entries");
     setActiveEquipmentSection("list");
   }
@@ -683,25 +693,92 @@ export default function Home() {
     (sum, entry) => sum + entry.amount,
     0,
   ) ?? 0;
+  const notificationCenter = (
+    <div className="notification-center">
+      <button
+        aria-expanded={isNotificationOpen}
+        aria-label={`Notifications, ${notifications.length} message${
+          notifications.length === 1 ? "" : "s"
+        }`}
+        className="bell-button"
+        onClick={() => setIsNotificationOpen((current) => !current)}
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="18"
+          viewBox="0 0 24 24"
+          width="18"
+        >
+          <path
+            d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+          <path
+            d="M13.73 21a2 2 0 0 1-3.46 0"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+        </svg>
+        {notifications.length > 0 && (
+          <span className="notification-count">{notifications.length}</span>
+        )}
+      </button>
+      {isNotificationOpen && (
+        <div className="notification-panel" role="status">
+          <div className="notification-panel-heading">
+            <strong>Notifications</strong>
+            {notifications.length > 0 && (
+              <button
+                onClick={() => setNotifications([])}
+                type="button"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+          <div className="notification-list">
+            {notifications.length ? (
+              notifications.map((item) => (
+                <article
+                  className={`notification-item notification-item-${item.tone}`}
+                  key={item.id}
+                >
+                  <div>
+                    <span>{item.message}</span>
+                    <small>{item.createdAt}</small>
+                  </div>
+                  <button
+                    aria-label="Dismiss notification"
+                    onClick={() =>
+                      setNotifications((current) =>
+                        current.filter((notification) => notification.id !== item.id),
+                      )
+                    }
+                    type="button"
+                  >
+                    X
+                  </button>
+                </article>
+              ))
+            ) : (
+              <p>No notifications yet.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   if (activeOwner) {
     return (
       <main className="app-shell">
-        {notification && (
-          <div
-            className={`notification notification-${notification.tone}`}
-            role="status"
-          >
-            <span>{notification.message}</span>
-            <button
-              aria-label="Dismiss notification"
-              onClick={() => setNotification(null)}
-              type="button"
-            >
-              X
-            </button>
-          </div>
-        )}
         <section className="workspace-shell" aria-label="Owner workspace">
           <header className="workspace-header">
             <div>
@@ -716,6 +793,7 @@ export default function Home() {
               <span>{ownerProfile?.displayName || activeOwner}</span>
               <small>{ownerProfile?.role || "Owner"}</small>
             </div>
+            {notificationCenter}
           </header>
 
           <nav className="workspace-nav" aria-label="Workspace navigation">
@@ -1322,21 +1400,7 @@ export default function Home() {
 
   return (
     <main className="login-shell">
-      {notification && (
-        <div
-          className={`notification notification-${notification.tone}`}
-          role="status"
-        >
-          <span>{notification.message}</span>
-          <button
-            aria-label="Dismiss notification"
-            onClick={() => setNotification(null)}
-            type="button"
-          >
-            X
-          </button>
-        </div>
-      )}
+      <div className="login-notification-center">{notificationCenter}</div>
       <section className="login-panel" aria-label="Owner login">
         <div className="login-copy">
           <p className="eyebrow">Private owner portal</p>
