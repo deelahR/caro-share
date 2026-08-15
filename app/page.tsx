@@ -775,7 +775,7 @@ export default function Home() {
               <h1>AgriBro</h1>
               <p className="intro">
                 Signed in as {ownerProfile?.displayName || activeOwner}. Submit
-                business entries, review approvals, and manage your account.
+                investment records, review approvals, and manage your account.
               </p>
             </div>
             <div className="owner-chip">
@@ -796,12 +796,12 @@ export default function Home() {
                 onClick={() => setActiveSection("entries")}
                 type="button"
               >
-                Business
+                Investment Record
               </button>
               <div className="nav-menu-panel">
                 {[
-                  ["entries", "New entry"],
-                  ["records", `Accepted records (${acceptedCount})`],
+                  ["entries", "New investment record"],
+                  ["records", `Accepted investment records (${acceptedCount})`],
                 ].map(([section, label]) => (
                   <button
                     className={activeSection === section ? "subnav-active" : ""}
@@ -895,13 +895,13 @@ export default function Home() {
             </button>
           </nav>
 
-          <section className="metric-grid" aria-label="Business summary">
+          <section className="metric-grid" aria-label="Investment record summary">
             <div>
               <span>Approval requests</span>
               <strong>{approvalRequestCount}</strong>
             </div>
             <div>
-              <span>Accepted records</span>
+              <span>Accepted investment records</span>
               <strong>{acceptedCount}</strong>
             </div>
             <div>
@@ -916,7 +916,7 @@ export default function Home() {
 
           <section className="module-overview" aria-label="System modules">
             {[
-              ["Business", "Entries and accepted records"],
+              ["Investment Record", "New records and accepted records"],
               ["Approvals", "All add and remove requests"],
               ["Equipment", "Assets, photos, and equipment list"],
               ["Owner & System", "Profiles, security, and database"],
@@ -929,12 +929,12 @@ export default function Home() {
           </section>
 
           {activeSection === "entries" && (
-            <section className="content-panel" aria-label="Business entry form">
+            <section className="content-panel" aria-label="Investment record form">
               <div>
-                <p className="eyebrow">Business entries</p>
-                <h2>Add entry for approval</h2>
+                <p className="eyebrow">Investment record</p>
+                <h2>Add record for approval</h2>
                 <p>
-                  Real entries stay pending until the submitter and one more
+                  Real records stay pending until the submitter and one more
                   owner accept them.
                 </p>
               </div>
@@ -1003,7 +1003,7 @@ export default function Home() {
                   <input name="note" placeholder="Optional details" />
                 </label>
                 <button disabled={isSavingEntry} type="submit">
-                  Submit entry
+                  Submit record
                 </button>
               </form>
             </section>
@@ -1133,12 +1133,15 @@ export default function Home() {
           )}
 
           {activeSection === "records" && (
-            <section className="content-panel" aria-label="Accepted entries">
+            <section
+              className="content-panel"
+              aria-label="Accepted investment records"
+            >
               <div>
                 <p className="eyebrow">Accepted database</p>
-                <h2>Accepted entries</h2>
+                <h2>Accepted investment records</h2>
                 <p>
-                  These entries have at least 2 owner approvals and are ready
+                  These records have at least 2 owner approvals and are ready
                   for reports.
                 </p>
               </div>
@@ -1159,7 +1162,7 @@ export default function Home() {
                     </article>
                   ))
                 ) : (
-                  <p>No accepted entries yet.</p>
+                  <p>No accepted investment records yet.</p>
                 )}
               </div>
             </section>
@@ -1332,7 +1335,7 @@ export default function Home() {
                     <p className="eyebrow">Profile</p>
                     <h2>{ownerProfile?.displayName || activeOwner}</h2>
                     <p>
-                      Keep owner contact details separate from business entry
+                      Keep owner contact details separate from investment record
                       records.
                     </p>
                   </div>
@@ -1507,7 +1510,7 @@ export default function Home() {
           <h1>AgriBro</h1>
           <p className="intro">
             Secure access for the four owners to record investments, expenses,
-            sales, and approvals.
+            sales, investment records, and approvals.
           </p>
         </div>
         <div className="auth-stack">
