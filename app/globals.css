@@ -472,6 +472,15 @@ h2 {
   min-height: 116px;
 }
 
+.dashboard-finance-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dashboard-finance-grid button {
+  min-height: 104px;
+  background: #f8faf7;
+}
+
 .dashboard-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1371,6 +1380,10 @@ h2 {
   }
 
   .dashboard-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-finance-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

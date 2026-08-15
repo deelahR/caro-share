@@ -31,6 +31,11 @@ type BusinessSummary = {
   approvalRequests: number;
   acceptedInvestmentRecords: number;
   acceptedAmount: number;
+  totalDebit: number;
+  totalCredit: number;
+  netBalance: number;
+  totalSales: number;
+  totalExpenses: number;
   equipmentItems: number;
 };
 
@@ -1029,6 +1034,27 @@ export default function Home() {
     0,
   ) ?? 0;
   const totalAccepted = businessSummary?.acceptedAmount ?? derivedTotalAccepted;
+  const derivedTotalDebit = entriesData?.accepted.reduce(
+    (sum, entry) => sum + (entry.entryType === "expense" ? entry.amount : 0),
+    0,
+  ) ?? 0;
+  const derivedTotalCredit = entriesData?.accepted.reduce(
+    (sum, entry) =>
+      sum +
+      (entry.entryType === "investment" || entry.entryType === "sale"
+        ? entry.amount
+        : 0),
+    0,
+  ) ?? 0;
+  const derivedTotalSales = entriesData?.accepted.reduce(
+    (sum, entry) => sum + (entry.entryType === "sale" ? entry.amount : 0),
+    0,
+  ) ?? 0;
+  const totalDebit = businessSummary?.totalDebit ?? derivedTotalDebit;
+  const totalCredit = businessSummary?.totalCredit ?? derivedTotalCredit;
+  const netBalance = businessSummary?.netBalance ?? totalCredit - totalDebit;
+  const totalSales = businessSummary?.totalSales ?? derivedTotalSales;
+  const totalExpenses = businessSummary?.totalExpenses ?? derivedTotalDebit;
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
       <button
@@ -1356,11 +1382,11 @@ export default function Home() {
                   <p className="eyebrow">Dashboard</p>
                   <h2>Business summary</h2>
                   <p>
-                    Quick view of approvals, accepted records, accepted amount,
-                    and approved equipment.
+                    Quick view of approvals, accepted records, debit, credit,
+                    balance, and approved equipment.
                   </p>
                 </div>
-                <span className="role-badge">Phase 1</span>
+                <span className="role-badge">Phase 2</span>
               </div>
               <div className="metric-grid dashboard-metric-grid">
                 <button
@@ -1394,6 +1420,48 @@ export default function Home() {
                 >
                   <span>Equipment items</span>
                   <strong>{equipmentCount}</strong>
+                </button>
+              </div>
+              <div className="metric-grid dashboard-finance-grid">
+                <button
+                  aria-label="Open debit records from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Total debit</span>
+                  <strong>Rs {totalDebit.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open credit records from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Total credit</span>
+                  <strong>Rs {totalCredit.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open net balance from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Net balance</span>
+                  <strong>Rs {netBalance.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open sales records from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Total sales</span>
+                  <strong>Rs {totalSales.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open expense records from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Total expenses</span>
+                  <strong>Rs {totalExpenses.toFixed(2)}</strong>
                 </button>
               </div>
               <div className="dashboard-actions">

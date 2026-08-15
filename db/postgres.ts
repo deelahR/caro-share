@@ -17,6 +17,11 @@ export type BusinessSummary = {
   approvalRequests: number;
   acceptedInvestmentRecords: number;
   acceptedAmount: number;
+  totalDebit: number;
+  totalCredit: number;
+  netBalance: number;
+  totalSales: number;
+  totalExpenses: number;
   equipmentItems: number;
 };
 
@@ -935,6 +940,10 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     pending_entries: string;
     accepted_entries: string;
     accepted_amount: string | null;
+    total_debit: string | null;
+    total_credit: string | null;
+    total_sales: string | null;
+    total_expenses: string | null;
     equipment_items: string;
     equipment_add_requests: string;
     equipment_delete_requests: string;
@@ -943,6 +952,26 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
       (select count(*) from business_entries where status = 'pending') as pending_entries,
       (select count(*) from business_entries where status = 'accepted') as accepted_entries,
       (select coalesce(sum(amount), 0) from business_entries where status = 'accepted') as accepted_amount,
+      (
+        select coalesce(sum(amount), 0)
+        from business_entries
+        where status = 'accepted' and entry_type = 'expense'
+      ) as total_debit,
+      (
+        select coalesce(sum(amount), 0)
+        from business_entries
+        where status = 'accepted' and entry_type in ('investment', 'sale')
+      ) as total_credit,
+      (
+        select coalesce(sum(amount), 0)
+        from business_entries
+        where status = 'accepted' and entry_type = 'sale'
+      ) as total_sales,
+      (
+        select coalesce(sum(amount), 0)
+        from business_entries
+        where status = 'accepted' and entry_type = 'expense'
+      ) as total_expenses,
       (select count(*) from equipment_items) as equipment_items,
       (select count(*) from equipment_add_requests where status = 'pending') as equipment_add_requests,
       (select count(*) from equipment_delete_requests where status = 'pending') as equipment_delete_requests
@@ -952,11 +981,18 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     Number(summary.pending_entries || 0) +
     Number(summary.equipment_add_requests || 0) +
     Number(summary.equipment_delete_requests || 0);
+  const totalDebit = Number(summary.total_debit || 0);
+  const totalCredit = Number(summary.total_credit || 0);
 
   return {
     approvalRequests,
     acceptedInvestmentRecords: Number(summary.accepted_entries || 0),
     acceptedAmount: Number(summary.accepted_amount || 0),
+    totalDebit,
+    totalCredit,
+    netBalance: totalCredit - totalDebit,
+    totalSales: Number(summary.total_sales || 0),
+    totalExpenses: Number(summary.total_expenses || 0),
     equipmentItems: Number(summary.equipment_items || 0),
   };
 }
