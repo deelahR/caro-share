@@ -75,9 +75,26 @@ export type EquipmentDeleteRequest = {
   createdAt: string;
 };
 
+export type EquipmentAddRequest = {
+  id: number;
+  name: string;
+  status: EquipmentStatus;
+  quantity: number;
+  estimatedCost: number;
+  targetDate: string;
+  ownerName: string;
+  createdBy: string;
+  imageData: string;
+  note: string;
+  approvalCount: number;
+  approvedBy: string[];
+  createdAt: string;
+};
+
 export type EquipmentData = {
   available: EquipmentItem[];
   upcoming: EquipmentItem[];
+  additionRequests: EquipmentAddRequest[];
   deletionRequests: EquipmentDeleteRequest[];
 };
 
@@ -283,6 +300,41 @@ function mapEquipmentDeleteRequest(row: {
   };
 }
 
+function mapEquipmentAddRequest(row: {
+  id: string | number;
+  name: string;
+  equipment_status: EquipmentStatus;
+  quantity: string | number;
+  estimated_cost: string;
+  target_date: string | Date | null;
+  owner_name: string;
+  created_by: string;
+  image_data: string | null;
+  note: string | null;
+  approval_count: string | number;
+  approved_by: string[] | null;
+  created_at: Date;
+}): EquipmentAddRequest {
+  return {
+    id: Number(row.id),
+    name: row.name,
+    status: row.equipment_status,
+    quantity: Number(row.quantity),
+    estimatedCost: Number(row.estimated_cost),
+    targetDate:
+      row.target_date instanceof Date
+        ? row.target_date.toISOString().slice(0, 10)
+        : row.target_date || "",
+    ownerName: row.owner_name,
+    createdBy: row.created_by,
+    imageData: row.image_data || "",
+    note: row.note || "",
+    approvalCount: Number(row.approval_count),
+    approvedBy: row.approved_by || [],
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
 export async function getDatabaseStatus(): Promise<DatabaseStatus> {
   if (!getDatabaseUrl()) {
     return {
@@ -419,6 +471,32 @@ export async function initializeDatabase() {
       )
     `);
     await client.query("alter table equipment_items add column if not exists image_data text");
+    await client.query(`
+      create table if not exists equipment_add_requests (
+        id bigserial primary key,
+        name text not null,
+        equipment_status text not null check (equipment_status in ('available', 'upcoming')),
+        quantity integer not null default 1 check (quantity > 0),
+        estimated_cost numeric(12, 2) not null default 0 check (estimated_cost >= 0),
+        target_date date,
+        owner_name text not null references owners(name),
+        created_by text not null references owners(name),
+        image_data text,
+        note text,
+        status text not null default 'pending' check (status in ('pending', 'accepted')),
+        accepted_at timestamptz,
+        created_at timestamptz not null default now()
+      )
+    `);
+    await client.query(`
+      create table if not exists equipment_add_approvals (
+        id bigserial primary key,
+        request_id bigint not null references equipment_add_requests(id) on delete cascade,
+        owner_name text not null references owners(name),
+        created_at timestamptz not null default now(),
+        unique (request_id, owner_name)
+      )
+    `);
     await client.query(`
       create table if not exists equipment_delete_requests (
         id bigserial primary key,
@@ -937,11 +1015,52 @@ export async function listEquipment(): Promise<EquipmentData> {
     group by equipment_delete_requests.id
     order by equipment_delete_requests.created_at desc
   `);
+  const addRequests = await getPool().query<{
+    id: string;
+    name: string;
+    equipment_status: EquipmentStatus;
+    quantity: string;
+    estimated_cost: string;
+    target_date: string | null;
+    owner_name: string;
+    created_by: string;
+    image_data: string | null;
+    note: string | null;
+    approval_count: string;
+    approved_by: string[] | null;
+    created_at: Date;
+  }>(`
+    select
+      equipment_add_requests.id,
+      equipment_add_requests.name,
+      equipment_add_requests.equipment_status,
+      equipment_add_requests.quantity,
+      equipment_add_requests.estimated_cost,
+      equipment_add_requests.target_date,
+      equipment_add_requests.owner_name,
+      equipment_add_requests.created_by,
+      equipment_add_requests.image_data,
+      equipment_add_requests.note,
+      count(equipment_add_approvals.id) as approval_count,
+      coalesce(
+        array_agg(equipment_add_approvals.owner_name order by equipment_add_approvals.created_at)
+          filter (where equipment_add_approvals.owner_name is not null),
+        array[]::text[]
+      ) as approved_by,
+      equipment_add_requests.created_at
+    from equipment_add_requests
+    left join equipment_add_approvals
+      on equipment_add_approvals.request_id = equipment_add_requests.id
+    where equipment_add_requests.status = 'pending'
+    group by equipment_add_requests.id
+    order by equipment_add_requests.created_at desc
+  `);
   const equipment = result.rows.map(mapEquipmentItem);
 
   return {
     available: equipment.filter((item) => item.status === "available"),
     upcoming: equipment.filter((item) => item.status === "upcoming"),
+    additionRequests: addRequests.rows.map(mapEquipmentAddRequest),
     deletionRequests: deleteRequests.rows.map(mapEquipmentDeleteRequest),
   };
 }
@@ -1005,6 +1124,212 @@ export async function createEquipmentItem(item: {
   );
 
   return { id: Number(result.rows[0].id) };
+}
+
+function isValidEquipmentRequest(item: {
+  name: string;
+  status: string;
+  quantity: number;
+  estimatedCost: number;
+  ownerName: string;
+  createdBy: string;
+}) {
+  return (
+    item.name &&
+    ["available", "upcoming"].includes(item.status) &&
+    item.ownerName &&
+    item.createdBy &&
+    Number.isInteger(item.quantity) &&
+    item.quantity > 0 &&
+    Number.isFinite(item.estimatedCost) &&
+    item.estimatedCost >= 0
+  );
+}
+
+export async function createEquipmentAddRequest(item: {
+  name: string;
+  status: string;
+  quantity: number;
+  estimatedCost: number;
+  targetDate: string;
+  ownerName: string;
+  createdBy: string;
+  imageData: string;
+  note: string;
+}) {
+  if (!isValidEquipmentRequest(item)) {
+    return null;
+  }
+
+  const result = await getPool().query<{ id: string }>(
+    `
+      insert into equipment_add_requests (
+        name,
+        equipment_status,
+        quantity,
+        estimated_cost,
+        target_date,
+        owner_name,
+        created_by,
+        image_data,
+        note
+      )
+      values ($1, $2, $3, $4, nullif($5, '')::date, $6, $7, nullif($8, ''), nullif($9, ''))
+      returning id
+    `,
+    [
+      item.name,
+      item.status,
+      item.quantity,
+      item.estimatedCost,
+      item.targetDate,
+      item.ownerName,
+      item.createdBy,
+      item.imageData,
+      item.note,
+    ],
+  );
+  const requestId = Number(result.rows[0].id);
+
+  await getPool().query(
+    `
+      insert into equipment_add_approvals (request_id, owner_name)
+      values ($1, $2)
+      on conflict (request_id, owner_name) do nothing
+    `,
+    [requestId, item.createdBy],
+  );
+
+  await getPool().query(
+    "insert into app_events (owner_name, action) values ($1, $2)",
+    [item.createdBy, `Submitted ${item.status} equipment for approval`],
+  );
+
+  return { id: requestId, status: "pending" as const, approvalCount: 1 };
+}
+
+export async function approveEquipmentAddRequest(
+  requestId: number,
+  ownerName: string,
+) {
+  if (!requestId || !ownerName) {
+    return null;
+  }
+
+  const client = await getPool().connect();
+
+  try {
+    await client.query("begin");
+
+    const request = await client.query<{
+      id: string;
+      name: string;
+      equipment_status: EquipmentStatus;
+      quantity: string;
+      estimated_cost: string;
+      target_date: string | null;
+      owner_name: string;
+      created_by: string;
+      image_data: string | null;
+      note: string | null;
+      status: "pending" | "accepted";
+    }>(
+      `
+        select
+          id,
+          name,
+          equipment_status,
+          quantity,
+          estimated_cost,
+          target_date,
+          owner_name,
+          created_by,
+          image_data,
+          note,
+          status
+        from equipment_add_requests
+        where id = $1
+        for update
+      `,
+      [requestId],
+    );
+    const item = request.rows[0];
+
+    if (!item || item.status === "accepted") {
+      await client.query("rollback");
+      return null;
+    }
+
+    await client.query(
+      `
+        insert into equipment_add_approvals (request_id, owner_name)
+        values ($1, $2)
+        on conflict (request_id, owner_name) do nothing
+      `,
+      [requestId, ownerName],
+    );
+
+    const approvals = await client.query<{ count: string }>(
+      "select count(*) from equipment_add_approvals where request_id = $1",
+      [requestId],
+    );
+    const approvalCount = Number(approvals.rows[0]?.count || 0);
+    const status = approvalCount >= 2 ? "accepted" : "pending";
+    let equipmentId: number | null = null;
+
+    if (status === "accepted") {
+      const equipment = await client.query<{ id: string }>(
+        `
+          insert into equipment_items (
+            name,
+            status,
+            quantity,
+            estimated_cost,
+            target_date,
+            owner_name,
+            created_by,
+            image_data,
+            note
+          )
+          values ($1, $2, $3, $4, $5, $6, $7, nullif($8, ''), nullif($9, ''))
+          returning id
+        `,
+        [
+          item.name,
+          item.equipment_status,
+          Number(item.quantity),
+          Number(item.estimated_cost),
+          item.target_date,
+          item.owner_name,
+          item.created_by,
+          item.image_data || "",
+          item.note || "",
+        ],
+      );
+      equipmentId = Number(equipment.rows[0].id);
+      await client.query(
+        `
+          update equipment_add_requests
+          set status = 'accepted', accepted_at = now()
+          where id = $1
+        `,
+        [requestId],
+      );
+    }
+
+    await client.query(
+      "insert into app_events (owner_name, action) values ($1, $2)",
+      [ownerName, `Approved equipment addition ${requestId}`],
+    );
+    await client.query("commit");
+
+    return { id: requestId, equipmentId, status, approvalCount };
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function requestEquipmentDeletion(

@@ -116,6 +116,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Approval module/);
   assert.match(page, /All add and remove requests/);
   assert.match(page, /Entry approvals/);
+  assert.match(page, /Equipment addition approvals/);
+  assert.match(page, /equipmentAddRequestCount/);
+  assert.match(page, /approveEquipmentAddition/);
   assert.match(page, /Removal approvals/);
   assert.match(page, /approvalRequestCount/);
   assert.match(page, /Equipment register/);
@@ -126,6 +129,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /activeEquipmentSection/);
   assert.match(page, /Equipment list/);
   assert.match(page, /Add equipment/);
+  assert.match(page, /Request equipment addition/);
+  assert.match(page, /Submit for approval/);
   assert.match(page, /Removal approval pending/);
   assert.match(page, /requestDeleteEquipment/);
   assert.doesNotMatch(page, /Approve delete|Approved delete|Request delete/);
@@ -144,7 +149,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(entriesRoute, /createBusinessEntry/);
   assert.match(entriesRoute, /listBusinessEntries/);
   assert.match(entriesApproveRoute, /approveBusinessEntry/);
-  assert.match(equipmentRoute, /createEquipmentItem/);
+  assert.match(equipmentRoute, /createEquipmentAddRequest/);
+  assert.match(equipmentRoute, /approveEquipmentAddRequest/);
   assert.match(equipmentRoute, /listEquipment/);
   assert.match(equipmentRoute, /requestEquipmentDeletion/);
   assert.match(equipmentRoute, /DELETE/);
@@ -170,10 +176,14 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /business_entries/);
   assert.match(postgres, /entry_approvals/);
   assert.match(postgres, /equipment_items/);
+  assert.match(postgres, /equipment_add_requests/);
+  assert.match(postgres, /equipment_add_approvals/);
   assert.match(postgres, /equipment_delete_requests/);
   assert.match(postgres, /equipment_delete_approvals/);
   assert.match(postgres, /image_data/);
   assert.match(postgres, /listEquipment/);
+  assert.match(postgres, /createEquipmentAddRequest/);
+  assert.match(postgres, /approveEquipmentAddRequest/);
   assert.match(postgres, /createEquipmentItem/);
   assert.match(postgres, /requestEquipmentDeletion/);
   assert.match(postgres, /approvalCount >= 2/);

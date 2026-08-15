@@ -661,6 +661,10 @@ h2 {
   background: #fffafa;
 }
 
+.equipment-add-approval-group {
+  background: #f7fbff;
+}
+
 .approval-group-heading {
   display: flex;
   align-items: center;

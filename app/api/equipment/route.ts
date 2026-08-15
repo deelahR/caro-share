@@ -1,5 +1,6 @@
 import {
-  createEquipmentItem,
+  approveEquipmentAddRequest,
+  createEquipmentAddRequest,
   initializeDatabase,
   listEquipment,
   requestEquipmentDeletion,
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       imageData?: string;
       note?: string;
     };
-    const equipment = await createEquipmentItem({
+    const equipmentRequest = await createEquipmentAddRequest({
       name: cleanText(payload.name),
       status: cleanText(payload.status),
       quantity: Number(payload.quantity),
@@ -49,17 +50,46 @@ export async function POST(request: Request) {
       note: cleanText(payload.note),
     });
 
-    if (!equipment) {
+    if (!equipmentRequest) {
       return Response.json(
         { error: "Equipment details are incomplete or invalid." },
         { status: 400 },
       );
     }
 
-    return Response.json({ equipment }, { status: 201 });
+    return Response.json({ equipmentRequest }, { status: 201 });
   } catch {
     return Response.json(
-      { error: "Equipment could not be saved. Check the database connection." },
+      { error: "Equipment request could not be saved. Check the database connection." },
+      { status: 503 },
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    await initializeDatabase();
+
+    const payload = (await request.json()) as {
+      requestId?: string | number;
+      ownerName?: string;
+    };
+    const addition = await approveEquipmentAddRequest(
+      Number(payload.requestId),
+      cleanText(payload.ownerName),
+    );
+
+    if (!addition) {
+      return Response.json(
+        { error: "Equipment addition request could not be found." },
+        { status: 404 },
+      );
+    }
+
+    return Response.json({ addition, equipment: await listEquipment() });
+  } catch {
+    return Response.json(
+      { error: "Equipment addition could not be approved." },
       { status: 503 },
     );
   }

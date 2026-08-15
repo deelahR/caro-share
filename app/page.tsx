@@ -83,9 +83,26 @@ type EquipmentDeleteRequest = {
   createdAt: string;
 };
 
+type EquipmentAddRequest = {
+  id: number;
+  name: string;
+  status: "available" | "upcoming";
+  quantity: number;
+  estimatedCost: number;
+  targetDate: string;
+  ownerName: string;
+  createdBy: string;
+  imageData: string;
+  note: string;
+  approvalCount: number;
+  approvedBy: string[];
+  createdAt: string;
+};
+
 type EquipmentData = {
   available: EquipmentItem[];
   upcoming: EquipmentItem[];
+  additionRequests: EquipmentAddRequest[];
   deletionRequests: EquipmentDeleteRequest[];
 };
 
@@ -165,6 +182,9 @@ export default function Home() {
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
+  const [isApprovingEquipmentAdd, setIsApprovingEquipmentAdd] = useState<
+    number | null
+  >(null);
   const [isDeletingEquipment, setIsDeletingEquipment] = useState<number | null>(
     null,
   );
@@ -502,7 +522,10 @@ export default function Home() {
         return;
       }
 
-      showNotification("success", "Equipment saved to the register.");
+      showNotification(
+        "success",
+        "Equipment submitted for approval. One more owner must accept it.",
+      );
       event.currentTarget.reset();
       setEquipmentImage("");
       setEquipmentDraft(null);
@@ -533,6 +556,46 @@ export default function Home() {
     }
 
     setEquipmentImage(await readImageFile(file));
+  }
+
+  async function approveEquipmentAddition(requestId: number) {
+    setIsApprovingEquipmentAdd(requestId);
+
+    try {
+      const response = await fetch("/api/equipment", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, ownerName: activeOwner }),
+      });
+      const payload = (await response.json()) as {
+        addition?: { status: "pending" | "accepted"; approvalCount: number };
+        equipment?: EquipmentData;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.addition) {
+        showNotification(
+          "error",
+          payload.error || "Equipment addition could not be approved.",
+        );
+        return;
+      }
+
+      if (payload.equipment) {
+        setEquipmentData(payload.equipment);
+      } else {
+        await loadEquipment();
+      }
+
+      showNotification(
+        "success",
+        payload.addition.status === "accepted"
+          ? "Equipment accepted and added to the register."
+          : "Equipment approval saved. One more owner approval is needed.",
+      );
+    } finally {
+      setIsApprovingEquipmentAdd(null);
+    }
   }
 
   async function requestDeleteEquipment(equipmentId: number) {
@@ -632,8 +695,10 @@ export default function Home() {
   const acceptedCount = entriesData?.accepted.length ?? 0;
   const equipmentCount =
     (equipmentData?.available.length ?? 0) + (equipmentData?.upcoming.length ?? 0);
+  const equipmentAddRequestCount = equipmentData?.additionRequests.length ?? 0;
   const deletionRequestCount = equipmentData?.deletionRequests.length ?? 0;
-  const approvalRequestCount = pendingCount + deletionRequestCount;
+  const approvalRequestCount =
+    pendingCount + equipmentAddRequestCount + deletionRequestCount;
   const normalizedEquipmentSearch = equipmentSearch.trim().toLowerCase();
   const filterEquipment = (items: EquipmentItem[]) =>
     normalizedEquipmentSearch
@@ -1151,6 +1216,62 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+                <div className="approval-group equipment-add-approval-group">
+                  <div className="approval-group-heading">
+                    <h3>Equipment addition approvals</h3>
+                    <span>{equipmentAddRequestCount} pending</span>
+                  </div>
+                  <div className="entry-list">
+                    {equipmentData?.additionRequests.length ? (
+                      equipmentData.additionRequests.map((request) => {
+                        const hasApprovedAddition =
+                          request.approvedBy.includes(activeOwner);
+
+                        return (
+                          <article className="entry-card" key={request.id}>
+                            <div>
+                              <strong>{request.name}</strong>
+                              <span>
+                                {request.status === "upcoming"
+                                  ? "Upcoming equipment"
+                                  : "Available equipment"}{" "}
+                                | Qty {request.quantity} | Rs{" "}
+                                {request.estimatedCost.toFixed(2)}
+                              </span>
+                              <span>Responsible: {request.ownerName}</span>
+                              {request.targetDate && (
+                                <span>Date: {request.targetDate}</span>
+                              )}
+                              {request.note && <span>Note: {request.note}</span>}
+                              <span>
+                                Submitted by {request.createdBy}. Approved by{" "}
+                                {request.approvedBy.length
+                                  ? request.approvedBy.join(", ")
+                                  : "none"}
+                                .
+                              </span>
+                            </div>
+                            <div className="approval-actions">
+                              <span>{request.approvalCount}/2 accepted</span>
+                              <button
+                                disabled={
+                                  isApprovingEquipmentAdd === request.id ||
+                                  hasApprovedAddition
+                                }
+                                onClick={() => approveEquipmentAddition(request.id)}
+                                type="button"
+                              >
+                                {hasApprovedAddition ? "Accepted" : "Accept"}
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })
+                    ) : (
+                      <p>No equipment addition approvals pending.</p>
+                    )}
+                  </div>
+                </div>
                 <div className="approval-group remove-approval-group">
                   <div className="approval-group-heading">
                     <h3>Removal approvals</h3>
@@ -1250,8 +1371,8 @@ export default function Home() {
                   <p className="eyebrow">Equipment register</p>
                   <h2>Professional equipment database</h2>
                   <p>
-                    Use the Equipment menu to add items or view the equipment
-                    list.
+                    Use the Equipment menu to request new items or view the
+                    approved equipment list.
                   </p>
                 </div>
                 <span className="role-badge">
@@ -1266,9 +1387,10 @@ export default function Home() {
                   onSubmit={submitEquipment}
                 >
                   <div className="form-section-title">
-                    <h3>Add equipment</h3>
+                    <h3>Request equipment addition</h3>
                     <p>
-                      Use camera on phone or upload an existing equipment photo.
+                      New equipment needs 2 owner approvals before it enters the
+                      equipment list.
                     </p>
                   </div>
                   {equipmentDraft && (
@@ -1371,7 +1493,7 @@ export default function Home() {
                     </div>
                   )}
                   <button disabled={isSavingEquipment} type="submit">
-                    Save equipment
+                    Submit for approval
                   </button>
                 </form>
               )}
