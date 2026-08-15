@@ -220,6 +220,7 @@ h2 {
 
 .workspace-shell {
   display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
   width: min(1120px, 100%);
   gap: 16px;
 }
@@ -234,6 +235,7 @@ h2 {
 }
 
 .workspace-header {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(420px, 1.55fr) auto;
   align-items: center;
@@ -272,8 +274,10 @@ h2 {
 }
 
 .workspace-nav {
-  display: flex;
-  flex-wrap: wrap;
+  position: sticky;
+  top: 16px;
+  display: grid;
+  align-self: start;
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -284,7 +288,9 @@ h2 {
 .workspace-nav button {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  width: 100%;
   min-height: 38px;
   border: 1px solid transparent;
   background: transparent;
@@ -301,7 +307,8 @@ h2 {
 }
 
 .workspace-nav .logout-button {
-  margin-left: auto;
+  justify-content: center;
+  margin-left: 0;
 }
 
 .approval-nav-button {
@@ -338,17 +345,14 @@ h2 {
 }
 
 .nav-menu-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
+  position: static;
   z-index: 5;
   display: none;
-  min-width: 240px;
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
-  box-shadow: 0 16px 34px rgba(29, 42, 35, 0.14);
+  box-shadow: none;
   padding: 8px;
 }
 
@@ -375,6 +379,11 @@ h2 {
   border-color: var(--line);
   background: var(--blue-soft);
   color: var(--blue);
+}
+
+.workspace-shell > .content-panel,
+.workspace-shell > .account-grid {
+  grid-column: 2;
 }
 
 .metric-grid {
@@ -1177,10 +1186,17 @@ h2 {
   }
 
   .workspace-shell {
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
+  .workspace-shell > .content-panel,
+  .workspace-shell > .account-grid {
+    grid-column: 1;
+  }
+
   .workspace-nav {
+    position: static;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;

@@ -194,7 +194,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(profileRoute, /updateOwnerProfile/);
   assert.match(globalsCss, /@media \(max-width: 760px\)/);
   assert.match(globalsCss, /overflow-x: hidden/);
-  assert.match(globalsCss, /\.workspace-nav\s*{[\s\S]*grid-template-columns: repeat\(2/);
+  assert.match(globalsCss, /\.workspace-shell\s*{[\s\S]*grid-template-columns: 230px minmax\(0, 1fr\)/);
+  assert.match(globalsCss, /\.workspace-nav\s*{[\s\S]*position: sticky/);
+  assert.match(globalsCss, /\.workspace-shell > \.content-panel/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-shell\s*{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*grid-template-columns: repeat\(2/);
   assert.match(globalsCss, /@media \(max-width: 430px\)/);
   assert.match(globalsCss, /\.login-form button,[\s\S]*\.entry-form button\s*{[\s\S]*width: 100%/);
   assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);
