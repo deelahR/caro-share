@@ -142,6 +142,7 @@ type EquipmentDraft = {
 
 type AppSection =
   | "dashboard"
+  | "summary"
   | "entries"
   | "approvals"
   | "records"
@@ -1126,6 +1127,18 @@ export default function Home() {
   });
   const ownerSummaries =
     businessSummary?.ownerSummaries ?? derivedOwnerSummaries;
+  const totalOwnerInvestment = ownerSummaries.reduce(
+    (sum, owner) => sum + owner.investment,
+    0,
+  );
+  const totalOwnerAssetValue = ownerSummaries.reduce(
+    (sum, owner) => sum + owner.assetValue,
+    0,
+  );
+  const totalOwnerNetContribution = ownerSummaries.reduce(
+    (sum, owner) => sum + owner.netContribution,
+    0,
+  );
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
       <button
@@ -1312,6 +1325,14 @@ export default function Home() {
               type="button"
             >
               Dashboard
+            </button>
+            <button
+              aria-current={activeSection === "summary" ? "page" : undefined}
+              className={activeSection === "summary" ? "nav-active" : ""}
+              onClick={() => openShortcut("summary")}
+              type="button"
+            >
+              Summary
             </button>
             <div className="nav-menu">
               <button
@@ -1605,6 +1626,9 @@ export default function Home() {
                 </div>
               </div>
               <div className="dashboard-actions">
+                <button onClick={() => openShortcut("summary")} type="button">
+                  Summary report
+                </button>
                 <button onClick={() => openShortcut("entries")} type="button">
                   New investment record
                 </button>
@@ -1617,6 +1641,109 @@ export default function Home() {
                 >
                   Add equipment
                 </button>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "summary" && (
+            <section
+              className="content-panel summary-panel"
+              aria-label="Summary report"
+            >
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Summary</p>
+                  <h2>Business report</h2>
+                  <p>
+                    Read-only totals from accepted records and approved
+                    equipment.
+                  </p>
+                </div>
+                <span className="role-badge">Phase 5</span>
+              </div>
+              <div className="metric-grid dashboard-finance-grid">
+                <button
+                  aria-label="Open accepted investment records from summary"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Owner investment</span>
+                  <strong>Rs {totalOwnerInvestment.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open sales records from summary"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Total sales</span>
+                  <strong>Rs {totalSales.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open expense records from summary"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Total expenses</span>
+                  <strong>Rs {totalExpenses.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open approved equipment from summary"
+                  onClick={() => openShortcut("equipment", "list")}
+                  type="button"
+                >
+                  <span>Asset value</span>
+                  <strong>Rs {totalOwnerAssetValue.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open net contribution from summary"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Net contribution</span>
+                  <strong>Rs {totalOwnerNetContribution.toFixed(2)}</strong>
+                </button>
+              </div>
+              <div className="summary-breakdown">
+                <div className="summary-table-wrap">
+                  <table className="summary-table">
+                    <thead>
+                      <tr>
+                        <th>Owner</th>
+                        <th>Investment</th>
+                        <th>Sale</th>
+                        <th>Expense</th>
+                        <th>Asset value</th>
+                        <th>Net contribution</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ownerSummaries.map((summary) => (
+                        <tr key={summary.ownerName}>
+                          <td>{summary.ownerName}</td>
+                          <td>Rs {summary.investment.toFixed(2)}</td>
+                          <td>Rs {summary.sale.toFixed(2)}</td>
+                          <td>Rs {summary.expense.toFixed(2)}</td>
+                          <td>Rs {summary.assetValue.toFixed(2)}</td>
+                          <td>Rs {summary.netContribution.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="summary-actions">
+                  <button onClick={() => openShortcut("records")} type="button">
+                    Review accepted records
+                  </button>
+                  <button
+                    onClick={() => openShortcut("equipment", "list")}
+                    type="button"
+                  >
+                    Review equipment
+                  </button>
+                  <button onClick={() => openShortcut("approvals")} type="button">
+                    Review approvals
+                  </button>
+                </div>
               </div>
             </section>
           )}
