@@ -1,4 +1,4 @@
-import { changeOwnerPin, initializeDatabase } from "../../../../db/postgres";
+import { changeOwnerPin, ensureDatabaseInitialized } from "../../../../db/postgres";
 
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -6,7 +6,7 @@ function cleanText(value: unknown) {
 
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       owner?: string;

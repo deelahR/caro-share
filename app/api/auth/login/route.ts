@@ -1,9 +1,9 @@
-import { authenticateOwner, initializeDatabase } from "../../../../db/postgres";
+import { authenticateOwner, ensureDatabaseInitialized } from "../../../../db/postgres";
 import { ownerSessionHeader } from "../owner-session";
 
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       owner?: string;

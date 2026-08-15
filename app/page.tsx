@@ -27,6 +27,13 @@ type DatabaseStatus = {
   message: string;
 };
 
+type BusinessSummary = {
+  approvalRequests: number;
+  acceptedInvestmentRecords: number;
+  acceptedAmount: number;
+  equipmentItems: number;
+};
+
 type Notification = {
   id: number;
   tone: "success" | "error" | "info";
@@ -176,6 +183,9 @@ export default function Home() {
   const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus | null>(
     null,
   );
+  const [businessSummary, setBusinessSummary] = useState<BusinessSummary | null>(
+    null,
+  );
   const [isCheckingDatabase, setIsCheckingDatabase] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [loginError, setLoginError] = useState("");
@@ -278,6 +288,18 @@ export default function Home() {
     }
 
     setEquipmentData(payload);
+  }, [showNotification]);
+
+  const loadBusinessSummary = useCallback(async () => {
+    const response = await fetch("/api/summary");
+    const payload = (await response.json()) as BusinessSummary & { error?: string };
+
+    if (!response.ok) {
+      showNotification("error", payload.error || "Summary could not be loaded.");
+      return;
+    }
+
+    setBusinessSummary(payload);
   }, [showNotification]);
 
   const loadNotifications = useCallback(
@@ -475,6 +497,7 @@ export default function Home() {
       event.currentTarget.reset();
       setSelectedEntryType("expense");
       setSelectedCategory("");
+      await loadBusinessSummary();
       await loadEntries();
       await loadNotifications();
     } finally {
@@ -529,6 +552,7 @@ export default function Home() {
       } else {
         await loadEntries();
       }
+      await loadBusinessSummary();
       await loadNotifications();
 
       showNotification(
@@ -581,6 +605,7 @@ export default function Home() {
       event.currentTarget.reset();
       setEquipmentImage("");
       setEquipmentDraft(null);
+      await loadBusinessSummary();
       await loadEquipment();
       await loadNotifications();
     } finally {
@@ -639,6 +664,7 @@ export default function Home() {
       } else {
         await loadEquipment();
       }
+      await loadBusinessSummary();
       await loadNotifications();
 
       showNotification(
@@ -680,6 +706,7 @@ export default function Home() {
       } else {
         await loadEquipment();
       }
+      await loadBusinessSummary();
       await loadNotifications();
 
       showNotification(
@@ -790,13 +817,20 @@ export default function Home() {
     if (activeOwner) {
       void Promise.resolve().then(() => {
         void refreshDatabaseStatus();
+        void loadBusinessSummary();
         void loadOwnerProfile(activeOwner);
         void loadEntries();
         void loadEquipment();
         void loadNotifications();
       });
     }
-  }, [activeOwner, loadEntries, loadEquipment, loadNotifications]);
+  }, [
+    activeOwner,
+    loadBusinessSummary,
+    loadEntries,
+    loadEquipment,
+    loadNotifications,
+  ]);
 
   useEffect(() => {
     if (!activeOwner) {
@@ -817,13 +851,18 @@ export default function Home() {
     selectedCategory === "Equipment contribution";
   const today = new Date().toISOString().slice(0, 10);
   const pendingCount = entriesData?.pending.length ?? 0;
-  const acceptedCount = entriesData?.accepted.length ?? 0;
-  const equipmentCount =
+  const derivedAcceptedCount = entriesData?.accepted.length ?? 0;
+  const derivedEquipmentCount =
     (equipmentData?.available.length ?? 0) + (equipmentData?.upcoming.length ?? 0);
   const equipmentAddRequestCount = equipmentData?.additionRequests.length ?? 0;
   const deletionRequestCount = equipmentData?.deletionRequests.length ?? 0;
-  const approvalRequestCount =
+  const derivedApprovalRequestCount =
     pendingCount + equipmentAddRequestCount + deletionRequestCount;
+  const acceptedCount =
+    businessSummary?.acceptedInvestmentRecords ?? derivedAcceptedCount;
+  const equipmentCount = businessSummary?.equipmentItems ?? derivedEquipmentCount;
+  const approvalRequestCount =
+    businessSummary?.approvalRequests ?? derivedApprovalRequestCount;
   const normalizedEquipmentSearch = equipmentSearch.trim().toLowerCase();
   const filterEquipment = (items: EquipmentItem[]) =>
     normalizedEquipmentSearch
@@ -942,10 +981,11 @@ export default function Home() {
       </article>
     );
   };
-  const totalAccepted = entriesData?.accepted.reduce(
+  const derivedTotalAccepted = entriesData?.accepted.reduce(
     (sum, entry) => sum + entry.amount,
     0,
   ) ?? 0;
+  const totalAccepted = businessSummary?.acceptedAmount ?? derivedTotalAccepted;
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
       <div>

@@ -1,6 +1,6 @@
 import {
   getOwnerProfile,
-  initializeDatabase,
+  ensureDatabaseInitialized,
   updateOwnerProfile,
 } from "../../../../db/postgres";
 
@@ -10,7 +10,7 @@ function cleanText(value: unknown) {
 
 export async function GET(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const url = new URL(request.url);
     const owner = cleanText(url.searchParams.get("owner"));
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       owner?: string;

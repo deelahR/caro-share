@@ -1,7 +1,7 @@
 import {
   approveEquipmentAddRequest,
   createEquipmentAddRequest,
-  initializeDatabase,
+  ensureDatabaseInitialized,
   listEquipment,
   requestEquipmentDeletion,
 } from "../../../db/postgres";
@@ -12,7 +12,7 @@ function cleanText(value: unknown) {
 
 export async function GET() {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     return Response.json(await listEquipment());
   } catch {
@@ -25,7 +25,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       name?: string;
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       requestId?: string | number;
@@ -97,7 +97,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       equipmentId?: string | number;

@@ -1,6 +1,6 @@
 import {
   approveBusinessEntry,
-  initializeDatabase,
+  ensureDatabaseInitialized,
   listBusinessEntries,
 } from "../../../../db/postgres";
 
@@ -10,7 +10,7 @@ function cleanText(value: unknown) {
 
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       entryId?: string | number;

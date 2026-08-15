@@ -1,6 +1,6 @@
 import {
   createBusinessEntry,
-  initializeDatabase,
+  ensureDatabaseInitialized,
   listBusinessEntries,
 } from "../../../db/postgres";
 
@@ -10,7 +10,7 @@ function cleanText(value: unknown) {
 
 export async function GET() {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     return Response.json(await listBusinessEntries());
   } catch {
@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const payload = (await request.json()) as {
       entryType?: string;

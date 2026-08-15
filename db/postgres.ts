@@ -2,6 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { Pool, type PoolClient } from "pg";
 
 let pool: Pool | null = null;
+let initializationPromise: Promise<DatabaseStatus> | null = null;
 
 export type DatabaseStatus = {
   configured: boolean;
@@ -10,6 +11,13 @@ export type DatabaseStatus = {
   databaseName?: string;
   ownerCount?: number;
   message: string;
+};
+
+export type BusinessSummary = {
+  approvalRequests: number;
+  acceptedInvestmentRecords: number;
+  acceptedAmount: number;
+  equipmentItems: number;
 };
 
 export type OwnerProfile = {
@@ -663,6 +671,17 @@ export async function initializeDatabase() {
   return getDatabaseStatus();
 }
 
+export async function ensureDatabaseInitialized() {
+  if (!initializationPromise) {
+    initializationPromise = initializeDatabase().catch((error) => {
+      initializationPromise = null;
+      throw error;
+    });
+  }
+
+  await initializationPromise;
+}
+
 export async function authenticateOwner(name: string, pin: string) {
   if (!name || !pin) {
     return null;
@@ -909,6 +928,37 @@ export async function clearOwnerNotifications(ownerName: string) {
   );
 
   return { cleared: result.rowCount || 0 };
+}
+
+export async function getBusinessSummary(): Promise<BusinessSummary> {
+  const result = await getPool().query<{
+    pending_entries: string;
+    accepted_entries: string;
+    accepted_amount: string | null;
+    equipment_items: string;
+    equipment_add_requests: string;
+    equipment_delete_requests: string;
+  }>(`
+    select
+      (select count(*) from business_entries where status = 'pending') as pending_entries,
+      (select count(*) from business_entries where status = 'accepted') as accepted_entries,
+      (select coalesce(sum(amount), 0) from business_entries where status = 'accepted') as accepted_amount,
+      (select count(*) from equipment_items) as equipment_items,
+      (select count(*) from equipment_add_requests where status = 'pending') as equipment_add_requests,
+      (select count(*) from equipment_delete_requests where status = 'pending') as equipment_delete_requests
+  `);
+  const summary = result.rows[0];
+  const approvalRequests =
+    Number(summary.pending_entries || 0) +
+    Number(summary.equipment_add_requests || 0) +
+    Number(summary.equipment_delete_requests || 0);
+
+  return {
+    approvalRequests,
+    acceptedInvestmentRecords: Number(summary.accepted_entries || 0),
+    acceptedAmount: Number(summary.accepted_amount || 0),
+    equipmentItems: Number(summary.equipment_items || 0),
+  };
 }
 
 export async function listBusinessEntries(): Promise<BusinessEntriesData> {

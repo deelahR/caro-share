@@ -59,6 +59,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     entriesApproveRoute,
     equipmentRoute,
     notificationsRoute,
+    summaryRoute,
     recoverPinRoute,
     profileRoute,
     globalsCss,
@@ -77,6 +78,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     readFile(new URL("../app/api/entries/approve/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/equipment/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/notifications/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/summary/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/recover-pin/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/owners/profile/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -99,6 +101,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /\/api\/entries/);
   assert.match(page, /\/api\/entries\/approve/);
   assert.match(page, /\/api\/equipment/);
+  assert.match(page, /\/api\/summary/);
   assert.match(page, /Owner profile/);
   assert.match(page, /Change PIN/);
   assert.match(page, /Secure area/);
@@ -118,6 +121,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.doesNotMatch(page, /Profiles, security, and database/);
   assert.match(page, /notificationCenter/);
   assert.match(page, /headerSummary/);
+  assert.match(page, /loadBusinessSummary/);
+  assert.match(page, /businessSummary/);
   assert.match(page, /header-intro/);
   assert.match(page, /header-actions/);
   assert.match(page, /header-metric-grid/);
@@ -192,6 +197,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(notificationsRoute, /clearOwnerNotifications/);
   assert.match(notificationsRoute, /PATCH/);
   assert.match(notificationsRoute, /DELETE/);
+  assert.match(summaryRoute, /getBusinessSummary/);
+  assert.match(summaryRoute, /ensureDatabaseInitialized/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
@@ -230,6 +237,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /equipment_delete_requests/);
   assert.match(postgres, /equipment_delete_approvals/);
   assert.match(postgres, /owner_notifications/);
+  assert.match(postgres, /initializationPromise/);
+  assert.match(postgres, /ensureDatabaseInitialized/);
+  assert.match(postgres, /getBusinessSummary/);
   assert.match(postgres, /createOwnerNotification/);
   assert.match(postgres, /createOtherOwnerNotifications/);
   assert.match(postgres, /listOwnerNotifications/);

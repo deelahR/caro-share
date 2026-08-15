@@ -1,7 +1,7 @@
 import {
   clearOwnerNotifications,
   dismissOwnerNotification,
-  initializeDatabase,
+  ensureDatabaseInitialized,
   listOwnerNotifications,
   markOwnerNotificationsRead,
 } from "../../../db/postgres";
@@ -9,7 +9,7 @@ import { getSessionOwner } from "../auth/owner-session";
 
 export async function GET(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const ownerName = getSessionOwner(request);
 
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const ownerName = getSessionOwner(request);
 
@@ -55,7 +55,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    await initializeDatabase();
+    await ensureDatabaseInitialized();
 
     const ownerName = getSessionOwner(request);
 
