@@ -271,6 +271,9 @@ h2 {
 }
 
 .workspace-nav button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-height: 38px;
   border: 1px solid transparent;
   background: transparent;
@@ -288,6 +291,23 @@ h2 {
 
 .workspace-nav .logout-button {
   margin-left: auto;
+}
+
+.approval-nav-button {
+  position: relative;
+}
+
+.nav-count {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 0 6px;
 }
 
 .nav-menu {
@@ -312,7 +332,7 @@ h2 {
   left: 0;
   z-index: 5;
   display: none;
-  min-width: 220px;
+  min-width: 240px;
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -334,7 +354,7 @@ h2 {
 .nav-menu-panel button {
   display: flex;
   align-items: center;
-  justify-content: start;
+  justify-content: space-between;
   width: 100%;
   min-height: 38px;
   text-align: left;
@@ -371,6 +391,32 @@ h2 {
 .metric-grid strong {
   color: var(--ink);
   font-size: 1.55rem;
+}
+
+.module-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.module-overview div {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+  padding: 12px;
+}
+
+.module-overview strong {
+  color: var(--ink);
+  font-size: 0.94rem;
+}
+
+.module-overview span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 
 .panel-heading {
@@ -1022,6 +1068,10 @@ h2 {
   }
 
   .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .module-overview {
     grid-template-columns: 1fr;
   }
 

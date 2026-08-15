@@ -94,6 +94,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Change PIN/);
   assert.match(page, /Secure area/);
   assert.match(page, /workspace-nav/);
+  assert.match(page, /Business/);
+  assert.match(page, /Owner & System/);
+  assert.match(page, /module-overview/);
+  assert.match(page, /Entries and accepted records/);
+  assert.match(page, /Profiles, security, and database/);
   assert.match(page, /notificationCenter/);
   assert.match(page, /bell-button/);
   assert.match(page, /notification-panel/);

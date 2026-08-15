@@ -798,23 +798,47 @@ export default function Home() {
           </header>
 
           <nav className="workspace-nav" aria-label="Workspace navigation">
-            {[
-              ["entries", "New entry"],
-              ["approvals", `Approvals (${approvalRequestCount})`],
-              ["records", "Accepted records"],
-              ["account", "Account"],
-              ["system", "System"],
-            ].map(([section, label]) => (
+            <div className="nav-menu">
               <button
-                aria-current={activeSection === section ? "page" : undefined}
-                className={activeSection === section ? "nav-active" : ""}
-                key={section}
-                onClick={() => setActiveSection(section as AppSection)}
+                className={
+                  activeSection === "entries" || activeSection === "records"
+                    ? "nav-active"
+                    : ""
+                }
+                onClick={() => setActiveSection("entries")}
                 type="button"
               >
-                {label}
+                Business
               </button>
-            ))}
+              <div className="nav-menu-panel">
+                {[
+                  ["entries", "New entry"],
+                  ["records", `Accepted records (${acceptedCount})`],
+                ].map(([section, label]) => (
+                  <button
+                    className={activeSection === section ? "subnav-active" : ""}
+                    key={section}
+                    onClick={() => setActiveSection(section as AppSection)}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              aria-current={activeSection === "approvals" ? "page" : undefined}
+              className={`approval-nav-button ${
+                activeSection === "approvals" ? "nav-active" : ""
+              }`}
+              onClick={() => setActiveSection("approvals")}
+              type="button"
+            >
+              Approvals
+              {approvalRequestCount > 0 && (
+                <span className="nav-count">{approvalRequestCount}</span>
+              )}
+            </button>
             <div className="nav-menu">
               <button
                 className={activeSection === "equipment" ? "nav-active" : ""}
@@ -850,6 +874,34 @@ export default function Home() {
                 ))}
               </div>
             </div>
+            <div className="nav-menu">
+              <button
+                className={
+                  activeSection === "account" || activeSection === "system"
+                    ? "nav-active"
+                    : ""
+                }
+                onClick={() => setActiveSection("account")}
+                type="button"
+              >
+                Owner & System
+              </button>
+              <div className="nav-menu-panel">
+                {[
+                  ["account", "Owner account"],
+                  ["system", "Database system"],
+                ].map(([section, label]) => (
+                  <button
+                    className={activeSection === section ? "subnav-active" : ""}
+                    key={section}
+                    onClick={() => setActiveSection(section as AppSection)}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button className="logout-button" onClick={logoutOwner} type="button">
               Log out
             </button>
@@ -872,6 +924,20 @@ export default function Home() {
               <span>Equipment items</span>
               <strong>{equipmentCount}</strong>
             </div>
+          </section>
+
+          <section className="module-overview" aria-label="System modules">
+            {[
+              ["Business", "Entries and accepted records"],
+              ["Approvals", "All add and remove requests"],
+              ["Equipment", "Assets, photos, and equipment list"],
+              ["Owner & System", "Profiles, security, and database"],
+            ].map(([module, description]) => (
+              <div key={module}>
+                <strong>{module}</strong>
+                <span>{description}</span>
+              </div>
+            ))}
           </section>
 
           {activeSection === "entries" && (
