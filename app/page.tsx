@@ -1058,7 +1058,7 @@ export default function Home() {
       <main className="app-shell">
         <section className="workspace-shell" aria-label="Owner workspace">
           <header className="workspace-header">
-            <div>
+            <div className="header-intro">
               <p className="eyebrow">Owner portal</p>
               <h1>AgriBro</h1>
               <p className="intro">
@@ -1067,11 +1067,13 @@ export default function Home() {
               </p>
             </div>
             {headerSummary}
-            <div className="owner-chip">
-              <span>{ownerProfile?.displayName || activeOwner}</span>
-              <small>{ownerProfile?.role || "Owner"}</small>
+            <div className="header-actions">
+              <div className="owner-chip">
+                <span>{ownerProfile?.displayName || activeOwner}</span>
+                <small>{ownerProfile?.role || "Owner"}</small>
+              </div>
+              {notificationCenter}
             </div>
-            {notificationCenter}
           </header>
 
           <nav className="workspace-nav" aria-label="Workspace navigation">
