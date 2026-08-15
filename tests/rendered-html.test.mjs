@@ -110,9 +110,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Add equipment details/);
   assert.match(page, /Linked from equipment contribution/);
   assert.match(page, /Owner & System/);
-  assert.match(page, /module-overview/);
-  assert.match(page, /New records and accepted records/);
-  assert.match(page, /Profiles, security, and database/);
+  assert.doesNotMatch(page, /module-overview/);
+  assert.doesNotMatch(page, /New records and accepted records/);
+  assert.doesNotMatch(page, /Profiles, security, and database/);
   assert.match(page, /notificationCenter/);
   assert.match(page, /headerSummary/);
   assert.match(page, /header-intro/);
@@ -200,7 +200,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);
   assert.match(globalsCss, /\.equipment-card-actions/);
   assert.match(globalsCss, /\.header-metric-grid/);
-  assert.match(globalsCss, /\.workspace-shell > \.module-overview\s*{[\s\S]*display: none/);
+  assert.doesNotMatch(globalsCss, /module-overview/);
   assert.match(postgres, /scryptSync/);
   assert.match(postgres, /timingSafeEqual/);
   assert.match(postgres, /pin_hash/);

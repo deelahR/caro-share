@@ -1186,20 +1186,6 @@ export default function Home() {
             </button>
           </nav>
 
-          <section className="module-overview" aria-label="System modules">
-            {[
-              ["Investment Record", "New records and accepted records"],
-              ["Approvals", "All add and remove requests"],
-              ["Equipment", "Assets, photos, and equipment list"],
-              ["Owner & System", "Profiles, security, and database"],
-            ].map(([module, description]) => (
-              <div key={module}>
-                <strong>{module}</strong>
-                <span>{description}</span>
-              </div>
-            ))}
-          </section>
-
           {activeSection === "entries" && (
             <section className="content-panel" aria-label="Investment record form">
               <div>

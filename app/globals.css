@@ -426,32 +426,6 @@ h2 {
   line-height: 1.1;
 }
 
-.module-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.module-overview div {
-  display: grid;
-  gap: 4px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fbfcfb;
-  padding: 12px;
-}
-
-.module-overview strong {
-  color: var(--ink);
-  font-size: 0.94rem;
-}
-
-.module-overview span {
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.35;
-}
-
 .panel-heading {
   display: flex;
   align-items: flex-start;
@@ -1265,19 +1239,6 @@ h2 {
     font-size: 1.25rem;
   }
 
-  .module-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .workspace-shell > .module-overview {
-    display: none;
-  }
-
-  .module-overview div {
-    padding: 10px;
-  }
-
   .search-row {
     grid-template-columns: 1fr;
     padding: 12px;
@@ -1388,8 +1349,7 @@ h2 {
 }
 
 @media (max-width: 430px) {
-  .workspace-nav,
-  .module-overview {
+  .workspace-nav {
     grid-template-columns: 1fr;
   }
 
