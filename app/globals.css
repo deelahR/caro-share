@@ -294,42 +294,16 @@ h2 {
   position: relative;
 }
 
-.nav-menu summary {
-  display: grid;
-  align-items: center;
-  min-height: 38px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.92rem;
-  font-weight: 700;
-  list-style: none;
-  padding: 0 30px 0 12px;
+.nav-menu > button {
+  padding-right: 28px;
 }
 
-.nav-menu summary::-webkit-details-marker {
-  display: none;
-}
-
-.nav-menu summary::after {
-  position: absolute;
-  right: 12px;
+.nav-menu > button::after {
   content: "v";
+  margin-left: 9px;
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 900;
-}
-
-.nav-menu[open] summary::after {
-  content: "^";
-}
-
-.nav-menu summary:hover,
-.nav-menu summary.nav-active {
-  border-color: var(--line);
-  background: var(--green-soft);
-  color: var(--green);
 }
 
 .nav-menu-panel {
@@ -337,7 +311,7 @@ h2 {
   top: calc(100% + 8px);
   left: 0;
   z-index: 5;
-  display: grid;
+  display: none;
   min-width: 220px;
   gap: 6px;
   border: 1px solid var(--line);
@@ -345,6 +319,16 @@ h2 {
   background: var(--panel);
   box-shadow: 0 16px 34px rgba(29, 42, 35, 0.14);
   padding: 8px;
+}
+
+.nav-menu:hover .nav-menu-panel,
+.nav-menu:focus-within .nav-menu-panel {
+  display: grid;
+}
+
+.nav-menu:hover > button::after,
+.nav-menu:focus-within > button::after {
+  content: "^";
 }
 
 .nav-menu-panel button {
@@ -916,8 +900,14 @@ h2 {
 
   .nav-menu-panel {
     position: static;
+    display: none;
     margin-top: 6px;
     box-shadow: none;
+  }
+
+  .nav-menu:hover .nav-menu-panel,
+  .nav-menu:focus-within .nav-menu-panel {
+    display: grid;
   }
 
   .metric-grid {

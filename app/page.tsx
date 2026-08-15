@@ -736,12 +736,17 @@ export default function Home() {
                 {label}
               </button>
             ))}
-            <details className="nav-menu" open={activeSection === "equipment"}>
-              <summary
+            <div className="nav-menu">
+              <button
                 className={activeSection === "equipment" ? "nav-active" : ""}
+                onClick={() => {
+                  setActiveSection("equipment");
+                  setActiveEquipmentSection("list");
+                }}
+                type="button"
               >
                 Equipment
-              </summary>
+              </button>
               <div className="nav-menu-panel">
                 {[
                   ["list", `Equipment list (${equipmentCount})`],
@@ -766,7 +771,7 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-            </details>
+            </div>
             <button className="logout-button" onClick={logoutOwner} type="button">
               Log out
             </button>
