@@ -89,6 +89,14 @@ type EquipmentData = {
   deletionRequests: EquipmentDeleteRequest[];
 };
 
+type EquipmentDraft = {
+  estimatedCost: string;
+  ownerName: string;
+  quantity: string;
+  targetDate: string;
+  note: string;
+};
+
 type AppSection =
   | "entries"
   | "approvals"
@@ -146,8 +154,12 @@ export default function Home() {
   const [entriesData, setEntriesData] = useState<EntriesData | null>(null);
   const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [equipmentImage, setEquipmentImage] = useState("");
   const [equipmentSearch, setEquipmentSearch] = useState("");
+  const [equipmentDraft, setEquipmentDraft] = useState<EquipmentDraft | null>(
+    null,
+  );
   const [activeEquipmentSection, setActiveEquipmentSection] =
     useState<EquipmentSection>("list");
   const [isSavingEntry, setIsSavingEntry] = useState(false);
@@ -392,10 +404,33 @@ export default function Home() {
       );
       event.currentTarget.reset();
       setSelectedEntryType("expense");
+      setSelectedCategory("");
       await loadEntries();
     } finally {
       setIsSavingEntry(false);
     }
+  }
+
+  function linkEquipmentContribution(formElement: HTMLFormElement | null) {
+    if (!formElement) {
+      return;
+    }
+
+    const form = new FormData(formElement);
+
+    setEquipmentDraft({
+      estimatedCost: readText(form, "amount"),
+      ownerName: readText(form, "ownerName") || activeOwner,
+      quantity: readText(form, "quantity") || "1",
+      targetDate: readText(form, "entryDate") || today,
+      note: readText(form, "note"),
+    });
+    setActiveSection("equipment");
+    setActiveEquipmentSection("add");
+    showNotification(
+      "success",
+      "Equipment contribution linked. Add the equipment details now.",
+    );
   }
 
   async function approveEntry(entryId: number) {
@@ -470,6 +505,7 @@ export default function Home() {
       showNotification("success", "Equipment saved to the register.");
       event.currentTarget.reset();
       setEquipmentImage("");
+      setEquipmentDraft(null);
       await loadEquipment();
     } finally {
       setIsSavingEquipment(false);
@@ -588,6 +624,9 @@ export default function Home() {
 
   const categories = entriesData?.categories ?? {};
   const selectedCategories = categories[selectedEntryType] ?? [];
+  const isEquipmentContribution =
+    selectedEntryType === "investment" &&
+    selectedCategory === "Equipment contribution";
   const today = new Date().toISOString().slice(0, 10);
   const pendingCount = entriesData?.pending.length ?? 0;
   const acceptedCount = entriesData?.accepted.length ?? 0;
@@ -617,6 +656,15 @@ export default function Home() {
   const visibleUpcomingEquipment = filterEquipment(equipmentData?.upcoming ?? []);
   const visibleEquipmentCount =
     visibleAvailableEquipment.length + visibleUpcomingEquipment.length;
+  const equipmentDraftKey = equipmentDraft
+    ? [
+        equipmentDraft.estimatedCost,
+        equipmentDraft.ownerName,
+        equipmentDraft.quantity,
+        equipmentDraft.targetDate,
+        equipmentDraft.note,
+      ].join("|")
+    : "blank-equipment";
   const renderEquipmentCard = (item: EquipmentItem) => {
     const isUpcoming = item.status === "upcoming";
     const isDeletionPending = Boolean(item.deletionRequestId);
@@ -943,7 +991,10 @@ export default function Home() {
                   Entry type
                   <select
                     name="entryType"
-                    onChange={(event) => setSelectedEntryType(event.target.value)}
+                    onChange={(event) => {
+                      setSelectedEntryType(event.target.value);
+                      setSelectedCategory("");
+                    }}
                     value={selectedEntryType}
                   >
                     {Object.entries(entryTypeLabels).map(([value, label]) => (
@@ -955,7 +1006,12 @@ export default function Home() {
                 </label>
                 <label>
                   Category
-                  <select name="category" required>
+                  <select
+                    name="category"
+                    onChange={(event) => setSelectedCategory(event.target.value)}
+                    required
+                    value={selectedCategory}
+                  >
                     <option value="">Choose category</option>
                     {selectedCategories.map((category) => (
                       <option key={category} value={category}>
@@ -1002,6 +1058,25 @@ export default function Home() {
                   Note
                   <input name="note" placeholder="Optional details" />
                 </label>
+                {isEquipmentContribution && (
+                  <div className="linked-module-panel">
+                    <div>
+                      <strong>Equipment contribution selected</strong>
+                      <span>
+                        Link this investment record to the Add equipment module
+                        so the asset is also saved in the equipment database.
+                      </span>
+                    </div>
+                    <button
+                      onClick={(event) =>
+                        linkEquipmentContribution(event.currentTarget.form)
+                      }
+                      type="button"
+                    >
+                      Add equipment details
+                    </button>
+                  </div>
+                )}
                 <button disabled={isSavingEntry} type="submit">
                   Submit record
                 </button>
@@ -1185,11 +1260,28 @@ export default function Home() {
                 </span>
               </div>
               {activeEquipmentSection === "add" && (
-                <form className="entry-form equipment-form" onSubmit={submitEquipment}>
+                <form
+                  className="entry-form equipment-form"
+                  key={equipmentDraftKey}
+                  onSubmit={submitEquipment}
+                >
                   <div className="form-section-title">
                     <h3>Add equipment</h3>
-                    <p>Use camera on phone or upload an existing equipment photo.</p>
+                    <p>
+                      Use camera on phone or upload an existing equipment photo.
+                    </p>
                   </div>
+                  {equipmentDraft && (
+                    <div className="linked-module-panel linked-module-panel-full">
+                      <div>
+                        <strong>Linked from equipment contribution</strong>
+                        <span>
+                          Amount, owner, date, quantity, and note were copied
+                          from the investment record.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <label>
                     Equipment name
                     <input
@@ -1208,7 +1300,7 @@ export default function Home() {
                   <label>
                     Quantity
                     <input
-                      defaultValue="1"
+                      defaultValue={equipmentDraft?.quantity || "1"}
                       min="1"
                       name="equipmentQuantity"
                       required
@@ -1219,6 +1311,7 @@ export default function Home() {
                   <label>
                     Cost / estimate
                     <input
+                      defaultValue={equipmentDraft?.estimatedCost || ""}
                       min="0"
                       name="equipmentCost"
                       placeholder="0.00"
@@ -1228,11 +1321,18 @@ export default function Home() {
                   </label>
                   <label>
                     Date
-                    <input name="equipmentDate" type="date" />
+                    <input
+                      defaultValue={equipmentDraft?.targetDate || ""}
+                      name="equipmentDate"
+                      type="date"
+                    />
                   </label>
                   <label>
                     Responsible owner
-                    <select name="equipmentOwner" defaultValue={activeOwner}>
+                    <select
+                      name="equipmentOwner"
+                      defaultValue={equipmentDraft?.ownerName || activeOwner}
+                    >
                       {owners.map((owner) => (
                         <option key={owner.name} value={owner.name}>
                           {owner.name}
@@ -1243,6 +1343,7 @@ export default function Home() {
                   <label className="entry-note">
                     Note
                     <input
+                      defaultValue={equipmentDraft?.note || ""}
                       name="equipmentNote"
                       placeholder="Condition, supplier, purpose, or next action"
                     />

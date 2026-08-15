@@ -95,6 +95,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Secure area/);
   assert.match(page, /workspace-nav/);
   assert.match(page, /Investment Record/);
+  assert.match(page, /isEquipmentContribution/);
+  assert.match(page, /linkEquipmentContribution/);
+  assert.match(page, /Equipment contribution selected/);
+  assert.match(page, /Add equipment details/);
+  assert.match(page, /Linked from equipment contribution/);
   assert.match(page, /Owner & System/);
   assert.match(page, /module-overview/);
   assert.match(page, /New records and accepted records/);
