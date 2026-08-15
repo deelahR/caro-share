@@ -97,7 +97,7 @@ type AppSection =
   | "account"
   | "system";
 
-type EquipmentSection = "add" | "list" | "delete";
+type EquipmentSection = "add" | "list";
 
 const owners: Owner[] = [
   { name: "Anish" },
@@ -594,6 +594,7 @@ export default function Home() {
   const equipmentCount =
     (equipmentData?.available.length ?? 0) + (equipmentData?.upcoming.length ?? 0);
   const deletionRequestCount = equipmentData?.deletionRequests.length ?? 0;
+  const approvalRequestCount = pendingCount + deletionRequestCount;
   const normalizedEquipmentSearch = equipmentSearch.trim().toLowerCase();
   const filterEquipment = (items: EquipmentItem[]) =>
     normalizedEquipmentSearch
@@ -799,7 +800,7 @@ export default function Home() {
           <nav className="workspace-nav" aria-label="Workspace navigation">
             {[
               ["entries", "New entry"],
-              ["approvals", `Approvals (${pendingCount})`],
+              ["approvals", `Approvals (${approvalRequestCount})`],
               ["records", "Accepted records"],
               ["account", "Account"],
               ["system", "System"],
@@ -829,7 +830,6 @@ export default function Home() {
                 {[
                   ["list", `Equipment list (${equipmentCount})`],
                   ["add", "Add equipment"],
-                  ["delete", `Delete approvals (${deletionRequestCount})`],
                 ].map(([section, label]) => (
                   <button
                     className={
@@ -857,8 +857,8 @@ export default function Home() {
 
           <section className="metric-grid" aria-label="Business summary">
             <div>
-              <span>Pending approvals</span>
-              <strong>{pendingCount}</strong>
+              <span>Approval requests</span>
+              <strong>{approvalRequestCount}</strong>
             </div>
             <div>
               <span>Accepted records</span>
@@ -956,57 +956,124 @@ export default function Home() {
           )}
 
           {activeSection === "approvals" && (
-            <section className="content-panel" aria-label="Owner notifications">
+            <section className="content-panel" aria-label="Approval module">
               <div className="panel-heading">
                 <div>
-                  <p className="eyebrow">Owner notifications</p>
-                  <h2>Pending approvals</h2>
+                  <p className="eyebrow">Approval module</p>
+                  <h2>All add and remove requests</h2>
                   <p>
-                    {pendingCount
-                      ? `${pendingCount} entry needs owner approval.`
-                      : "No entries are waiting for approval."}
+                    {approvalRequestCount
+                      ? `${approvalRequestCount} request needs owner approval.`
+                      : "No add or remove requests are waiting for approval."}
                   </p>
                 </div>
                 <span className="role-badge">2 approvals required</span>
               </div>
-              <div className="entry-list">
-                {entriesData?.pending.map((entry) => (
-                  <article className="entry-card" key={entry.id}>
-                    <div>
-                      <strong>
-                        {entryTypeLabels[entry.entryType]} - {entry.category}
-                      </strong>
-                      <span>
-                        Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
-                        {entry.entryDate}
-                      </span>
-                      {entry.quantity && <span>Quantity: {entry.quantity}</span>}
-                      {entry.note && <span>Note: {entry.note}</span>}
-                      <span>
-                        Submitted by {entry.createdBy}. Approved by{" "}
-                        {entry.approvedBy.length
-                          ? entry.approvedBy.join(", ")
-                          : "none"}
-                        .
-                      </span>
-                    </div>
-                    <div className="approval-actions">
-                      <span>{entry.approvalCount}/2 accepted</span>
-                      <button
-                        disabled={
-                          isApprovingEntry === entry.id ||
-                          entry.approvedBy.includes(activeOwner)
-                        }
-                        onClick={() => approveEntry(entry.id)}
-                        type="button"
-                      >
-                        {entry.approvedBy.includes(activeOwner)
-                          ? "Accepted"
-                          : "Accept"}
-                      </button>
-                    </div>
-                  </article>
-                ))}
+              <div className="approval-module">
+                <div className="approval-group">
+                  <div className="approval-group-heading">
+                    <h3>Add requests</h3>
+                    <span>{pendingCount} pending</span>
+                  </div>
+                  <div className="entry-list">
+                    {entriesData?.pending.length ? (
+                      entriesData.pending.map((entry) => (
+                        <article className="entry-card" key={entry.id}>
+                          <div>
+                            <strong>
+                              {entryTypeLabels[entry.entryType]} -{" "}
+                              {entry.category}
+                            </strong>
+                            <span>
+                              Rs {entry.amount.toFixed(2)} by {entry.ownerName} on{" "}
+                              {entry.entryDate}
+                            </span>
+                            {entry.quantity && (
+                              <span>Quantity: {entry.quantity}</span>
+                            )}
+                            {entry.note && <span>Note: {entry.note}</span>}
+                            <span>
+                              Submitted by {entry.createdBy}. Approved by{" "}
+                              {entry.approvedBy.length
+                                ? entry.approvedBy.join(", ")
+                                : "none"}
+                              .
+                            </span>
+                          </div>
+                          <div className="approval-actions">
+                            <span>{entry.approvalCount}/2 accepted</span>
+                            <button
+                              disabled={
+                                isApprovingEntry === entry.id ||
+                                entry.approvedBy.includes(activeOwner)
+                              }
+                              onClick={() => approveEntry(entry.id)}
+                              type="button"
+                            >
+                              {entry.approvedBy.includes(activeOwner)
+                                ? "Accepted"
+                                : "Accept"}
+                            </button>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <p>No add requests pending.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="approval-group remove-approval-group">
+                  <div className="approval-group-heading">
+                    <h3>Remove requests</h3>
+                    <span>{deletionRequestCount} pending</span>
+                  </div>
+                  <div className="entry-list">
+                    {equipmentData?.deletionRequests.length ? (
+                      equipmentData.deletionRequests.map((request) => {
+                        const hasApprovedRemoval =
+                          request.approvedBy.includes(activeOwner);
+
+                        return (
+                          <article className="entry-card delete-request-card" key={request.id}>
+                            <div>
+                              <strong>{request.itemName}</strong>
+                              <span>Equipment removal request</span>
+                              <span>Requested by {request.requestedBy}</span>
+                              <span>
+                                Approved by{" "}
+                                {request.approvedBy.length
+                                  ? request.approvedBy.join(", ")
+                                  : "none"}
+                                .
+                              </span>
+                            </div>
+                            <div className="approval-actions">
+                              <span>{request.approvalCount}/2 accepted</span>
+                              <button
+                                className="danger-button"
+                                disabled={
+                                  !request.equipmentId ||
+                                  isDeletingEquipment === request.equipmentId ||
+                                  hasApprovedRemoval
+                                }
+                                onClick={() =>
+                                  request.equipmentId
+                                    ? requestDeleteEquipment(request.equipmentId)
+                                    : undefined
+                                }
+                                type="button"
+                              >
+                                {hasApprovedRemoval ? "Accepted" : "Accept remove"}
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })
+                    ) : (
+                      <p>No remove requests pending.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </section>
           )}
@@ -1051,8 +1118,8 @@ export default function Home() {
                   <p className="eyebrow">Equipment register</p>
                   <h2>Professional equipment database</h2>
                   <p>
-                    Use the Equipment menu to add items, view the list, or
-                    manage deletion approvals.
+                    Use the Equipment menu to add items or view the equipment
+                    list.
                   </p>
                 </div>
                 <span className="role-badge">
@@ -1149,27 +1216,6 @@ export default function Home() {
                     Save equipment
                   </button>
                 </form>
-              )}
-              {activeEquipmentSection === "delete" && (
-                <div className="delete-queue">
-                  <h3>Delete approvals</h3>
-                  {equipmentData?.deletionRequests.length ? (
-                    equipmentData.deletionRequests.map((request) => (
-                      <div className="delete-request" key={request.id}>
-                        <strong>{request.itemName}</strong>
-                        <span>
-                          {request.approvalCount}/2 approvals
-                          {request.approvedBy.length
-                            ? ` by ${request.approvedBy.join(", ")}`
-                            : ""}
-                        </span>
-                        <span>Requested by {request.requestedBy}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p>No equipment deletion pending.</p>
-                  )}
-                </div>
               )}
               {activeEquipmentSection === "list" && (
                 <>
