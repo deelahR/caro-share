@@ -106,6 +106,12 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Change PIN/);
   assert.match(page, /Secure area/);
   assert.match(page, /workspace-nav/);
+  assert.match(page, /"dashboard"/);
+  assert.match(page, /Dashboard/);
+  assert.match(page, /dashboard-panel/);
+  assert.match(page, /dashboard-metric-grid/);
+  assert.match(page, /dashboard-actions/);
+  assert.match(page, /Phase 1/);
   assert.match(page, /menu-toggle/);
   assert.match(page, /menu-overlay/);
   assert.match(page, /workspace-nav-open/);
@@ -222,6 +228,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);
   assert.match(globalsCss, /\.equipment-card-actions/);
   assert.match(globalsCss, /\.header-metric-grid/);
+  assert.match(globalsCss, /\.dashboard-panel/);
+  assert.match(globalsCss, /\.dashboard-metric-grid/);
+  assert.match(globalsCss, /\.dashboard-actions/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);
   assert.doesNotMatch(globalsCss, /module-overview/);

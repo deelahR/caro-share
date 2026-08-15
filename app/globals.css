@@ -460,6 +460,28 @@ h2 {
   line-height: 1.1;
 }
 
+.dashboard-panel {
+  gap: 18px;
+}
+
+.dashboard-metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboard-metric-grid button {
+  min-height: 116px;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-actions button {
+  min-width: 170px;
+}
+
 .panel-heading {
   display: flex;
   align-items: flex-start;
@@ -1348,8 +1370,20 @@ h2 {
     gap: 8px;
   }
 
+  .dashboard-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .metric-grid button {
     padding: 14px;
+  }
+
+  .dashboard-actions {
+    display: grid;
+  }
+
+  .dashboard-actions button {
+    width: 100%;
   }
 
   .metric-grid strong {

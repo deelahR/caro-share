@@ -123,6 +123,7 @@ type EquipmentDraft = {
 };
 
 type AppSection =
+  | "dashboard"
   | "entries"
   | "approvals"
   | "records"
@@ -178,7 +179,7 @@ function formatNotificationTime(value: string) {
 
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
-  const [activeSection, setActiveSection] = useState<AppSection>("entries");
+  const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
   const [ownerProfile, setOwnerProfile] = useState<OwnerProfile | null>(null);
   const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus | null>(
     null,
@@ -809,7 +810,7 @@ export default function Home() {
     setSecurityMessage("");
     setNotifications([]);
     setIsNotificationOpen(false);
-    setActiveSection("entries");
+    setActiveSection("dashboard");
     setActiveEquipmentSection("list");
   }
 
@@ -1207,6 +1208,14 @@ export default function Home() {
             className={`workspace-nav ${isMenuOpen ? "workspace-nav-open" : ""}`}
             aria-label="Workspace navigation"
           >
+            <button
+              aria-current={activeSection === "dashboard" ? "page" : undefined}
+              className={activeSection === "dashboard" ? "nav-active" : ""}
+              onClick={() => openShortcut("dashboard")}
+              type="button"
+            >
+              Dashboard
+            </button>
             <div className="nav-menu">
               <button
                 className={
@@ -1339,6 +1348,70 @@ export default function Home() {
               Log out
             </button>
           </nav>
+
+          {activeSection === "dashboard" && (
+            <section className="content-panel dashboard-panel" aria-label="Dashboard">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Dashboard</p>
+                  <h2>Business summary</h2>
+                  <p>
+                    Quick view of approvals, accepted records, accepted amount,
+                    and approved equipment.
+                  </p>
+                </div>
+                <span className="role-badge">Phase 1</span>
+              </div>
+              <div className="metric-grid dashboard-metric-grid">
+                <button
+                  aria-label="Open approval requests from dashboard"
+                  onClick={() => openShortcut("approvals")}
+                  type="button"
+                >
+                  <span>Approval requests</span>
+                  <strong>{approvalRequestCount}</strong>
+                </button>
+                <button
+                  aria-label="Open accepted investment records from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Accepted investment records</span>
+                  <strong>{acceptedCount}</strong>
+                </button>
+                <button
+                  aria-label="Open accepted amount from dashboard"
+                  onClick={() => openShortcut("records")}
+                  type="button"
+                >
+                  <span>Accepted amount</span>
+                  <strong>Rs {totalAccepted.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open equipment items from dashboard"
+                  onClick={() => openShortcut("equipment", "list")}
+                  type="button"
+                >
+                  <span>Equipment items</span>
+                  <strong>{equipmentCount}</strong>
+                </button>
+              </div>
+              <div className="dashboard-actions">
+                <button onClick={() => openShortcut("entries")} type="button">
+                  New investment record
+                </button>
+                <button onClick={() => openShortcut("approvals")} type="button">
+                  Review approvals
+                </button>
+                <button
+                  onClick={() => openShortcut("equipment", "add")}
+                  type="button"
+                >
+                  Add equipment
+                </button>
+              </div>
+            </section>
+          )}
 
           {activeSection === "entries" && (
             <section className="content-panel" aria-label="Investment record form">
