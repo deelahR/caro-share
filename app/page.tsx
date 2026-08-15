@@ -2045,18 +2045,26 @@ export default function Home() {
                     <div>
                       <strong>Equipment contribution selected</strong>
                       <span>
-                        Link this investment record to the Add equipment module
-                        so the asset is also saved in the equipment database.
+                        Add a new equipment item or check the available
+                        equipment list before submitting this record.
                       </span>
                     </div>
-                    <button
-                      onClick={(event) =>
-                        linkEquipmentContribution(event.currentTarget.form)
-                      }
-                      type="button"
-                    >
-                      Add equipment details
-                    </button>
+                    <div className="linked-module-actions">
+                      <button
+                        onClick={(event) =>
+                          linkEquipmentContribution(event.currentTarget.form)
+                        }
+                        type="button"
+                      >
+                        Add equipment details
+                      </button>
+                      <button
+                        onClick={() => openShortcut("equipment", "list")}
+                        type="button"
+                      >
+                        Available equipment list
+                      </button>
+                    </div>
                   </div>
                 )}
                 <button disabled={isSavingEntry} type="submit">

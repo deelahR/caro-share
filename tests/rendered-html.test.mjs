@@ -158,6 +158,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /linkEquipmentContribution/);
   assert.match(page, /Equipment contribution selected/);
   assert.match(page, /Add equipment details/);
+  assert.match(page, /Available equipment list/);
+  assert.match(page, /linked-module-actions/);
   assert.match(page, /Linked from equipment contribution/);
   assert.match(page, /Owner & System/);
   assert.doesNotMatch(page, /module-overview/);
@@ -294,6 +296,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.owner-summary-panel/);
   assert.match(globalsCss, /\.owner-summary-grid/);
   assert.match(globalsCss, /\.dashboard-actions/);
+  assert.match(globalsCss, /\.linked-module-actions/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);
   assert.doesNotMatch(globalsCss, /module-overview/);

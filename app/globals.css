@@ -760,7 +760,7 @@ h2 {
   padding: 14px;
 }
 
-.linked-module-panel div {
+.linked-module-panel > div:first-child {
   display: grid;
   gap: 4px;
 }
@@ -786,6 +786,17 @@ h2 {
 
 .linked-module-panel-full {
   justify-content: start;
+}
+
+.linked-module-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.linked-module-actions button {
+  min-width: 190px;
 }
 
 .image-field {
@@ -1644,7 +1655,13 @@ h2 {
     display: grid;
   }
 
-  .linked-module-panel button {
+  .linked-module-actions {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .linked-module-panel button,
+  .linked-module-actions button {
     width: 100%;
   }
 
