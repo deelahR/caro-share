@@ -66,12 +66,26 @@ type EquipmentItem = {
   createdBy: string;
   imageData: string;
   note: string;
+  deletionRequestId: number | null;
+  deletionApprovalCount: number;
+  deletionApprovedBy: string[];
+  createdAt: string;
+};
+
+type EquipmentDeleteRequest = {
+  id: number;
+  equipmentId: number | null;
+  itemName: string;
+  requestedBy: string;
+  approvalCount: number;
+  approvedBy: string[];
   createdAt: string;
 };
 
 type EquipmentData = {
   available: EquipmentItem[];
   upcoming: EquipmentItem[];
+  deletionRequests: EquipmentDeleteRequest[];
 };
 
 type AppSection =
@@ -133,15 +147,18 @@ export default function Home() {
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
+  const [isDeletingEquipment, setIsDeletingEquipment] = useState<number | null>(
+    null,
+  );
 
   const showNotification = useCallback(
     (tone: Notification["tone"], message: string) => {
-    const id = Date.now();
+      const id = Date.now();
 
-    setNotification({ id, tone, message });
-    window.setTimeout(() => {
-      setNotification((current) => (current?.id === id ? null : current));
-    }, 5000);
+      setNotification({ id, tone, message });
+      window.setTimeout(() => {
+        setNotification((current) => (current?.id === id ? null : current));
+      }, 5000);
     },
     [],
   );
@@ -469,6 +486,46 @@ export default function Home() {
     setEquipmentImage(await readImageFile(file));
   }
 
+  async function requestDeleteEquipment(equipmentId: number) {
+    setIsDeletingEquipment(equipmentId);
+
+    try {
+      const response = await fetch("/api/equipment", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ equipmentId, ownerName: activeOwner }),
+      });
+      const payload = (await response.json()) as {
+        deletion?: { status: "pending" | "deleted"; approvalCount: number };
+        equipment?: EquipmentData;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.deletion) {
+        showNotification(
+          "error",
+          payload.error || "Equipment deletion could not be approved.",
+        );
+        return;
+      }
+
+      if (payload.equipment) {
+        setEquipmentData(payload.equipment);
+      } else {
+        await loadEquipment();
+      }
+
+      showNotification(
+        "success",
+        payload.deletion.status === "deleted"
+          ? "Equipment deleted after 2 owner approvals."
+          : "Deletion request saved. One more owner approval is needed.",
+      );
+    } finally {
+      setIsDeletingEquipment(null);
+    }
+  }
+
   async function refreshDatabaseStatus() {
     setIsCheckingDatabase(true);
 
@@ -521,6 +578,7 @@ export default function Home() {
   const acceptedCount = entriesData?.accepted.length ?? 0;
   const equipmentCount =
     (equipmentData?.available.length ?? 0) + (equipmentData?.upcoming.length ?? 0);
+  const deletionRequestCount = equipmentData?.deletionRequests.length ?? 0;
   const normalizedEquipmentSearch = equipmentSearch.trim().toLowerCase();
   const filterEquipment = (items: EquipmentItem[]) =>
     normalizedEquipmentSearch
@@ -543,6 +601,79 @@ export default function Home() {
   const visibleUpcomingEquipment = filterEquipment(equipmentData?.upcoming ?? []);
   const visibleEquipmentCount =
     visibleAvailableEquipment.length + visibleUpcomingEquipment.length;
+  const renderEquipmentCard = (item: EquipmentItem) => {
+    const isUpcoming = item.status === "upcoming";
+    const isDeletionPending = Boolean(item.deletionRequestId);
+    const hasApprovedDeletion = item.deletionApprovedBy.includes(activeOwner);
+
+    return (
+      <article
+        className={`equipment-card ${
+          isUpcoming ? "upcoming-equipment" : "available-equipment"
+        }`}
+        key={item.id}
+      >
+        <div className="equipment-card-main">
+          {item.imageData ? (
+            <img
+              alt={`${item.name} equipment`}
+              className="equipment-photo"
+              src={item.imageData}
+            />
+          ) : (
+            <div className="equipment-photo equipment-photo-empty">No photo</div>
+          )}
+          <div className="equipment-card-body">
+            <div className="equipment-card-top">
+              <span className={`status-pill ${isUpcoming ? "upcoming-pill" : ""}`}>
+                {isUpcoming ? "Upcoming" : "Available"}
+              </span>
+              {isDeletionPending && (
+                <span className="status-pill delete-pending-pill">
+                  Delete pending
+                </span>
+              )}
+            </div>
+            <strong>{item.name}</strong>
+            <span className="equipment-meta">
+              Qty {item.quantity} |{" "}
+              {isUpcoming ? "estimated " : ""}Rs {item.estimatedCost.toFixed(2)}
+            </span>
+            <div className="equipment-detail-grid">
+              <span>Responsible: {item.ownerName}</span>
+              <span>Added by: {item.createdBy}</span>
+              {item.targetDate && (
+                <span>{isUpcoming ? "Target date" : "Date"}: {item.targetDate}</span>
+              )}
+              {item.note && <span>Note: {item.note}</span>}
+            </div>
+          </div>
+        </div>
+        <div className="equipment-card-actions">
+          {isDeletionPending && (
+            <span>
+              Delete approval: {item.deletionApprovalCount}/2
+              {item.deletionApprovedBy.length
+                ? ` by ${item.deletionApprovedBy.join(", ")}`
+                : ""}
+            </span>
+          )}
+          <button
+            className="danger-button"
+            disabled={isDeletingEquipment === item.id || hasApprovedDeletion}
+            onClick={() => requestDeleteEquipment(item.id)}
+            type="button"
+          >
+            {hasApprovedDeletion
+              ? "Approved delete"
+              : isDeletionPending
+                ? "Approve delete"
+                : "Request delete"}
+          </button>
+        </div>
+      </article>
+    );
+  };
   const totalAccepted = entriesData?.accepted.reduce(
     (sum, entry) => sum + entry.amount,
     0,
@@ -797,13 +928,19 @@ export default function Home() {
 
           {activeSection === "equipment" && (
             <section className="content-panel" aria-label="Equipment register">
-              <div>
-                <p className="eyebrow">Equipment register</p>
-                <h2>Available and upcoming equipment</h2>
-                <p>
-                  Track business equipment separately from expenses and
-                  investments.
-                </p>
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Equipment register</p>
+                  <h2>Professional equipment database</h2>
+                  <p>
+                    Track photos, costs, owners, upcoming purchases, and
+                    deletion approvals in one place.
+                  </p>
+                </div>
+                <span className="role-badge">
+                  {deletionRequestCount} pending delete
+                  {deletionRequestCount === 1 ? "" : "s"}
+                </span>
               </div>
               <div className="search-row">
                 <label>
@@ -819,91 +956,117 @@ export default function Home() {
                   Showing {visibleEquipmentCount} of {equipmentCount} items
                 </span>
               </div>
-              <form className="entry-form" onSubmit={submitEquipment}>
-                <label>
-                  Equipment name
-                  <input
-                    name="equipmentName"
-                    placeholder="Water pump, tiller, sprayer"
-                    required
-                  />
-                </label>
-                <label>
-                  Status
-                  <select name="equipmentStatus" defaultValue="available">
-                    <option value="available">Available</option>
-                    <option value="upcoming">Upcoming</option>
-                  </select>
-                </label>
-                <label>
-                  Quantity
-                  <input
-                    defaultValue="1"
-                    min="1"
-                    name="equipmentQuantity"
-                    required
-                    step="1"
-                    type="number"
-                  />
-                </label>
-                <label>
-                  Cost / estimate
-                  <input
-                    min="0"
-                    name="equipmentCost"
-                    placeholder="0.00"
-                    step="0.01"
-                    type="number"
-                  />
-                </label>
-                <label>
-                  Date
-                  <input name="equipmentDate" type="date" />
-                </label>
-                <label>
-                  Responsible owner
-                  <select name="equipmentOwner" defaultValue={activeOwner}>
-                    {owners.map((owner) => (
-                      <option key={owner.name} value={owner.name}>
-                        {owner.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="entry-note">
-                  Note
-                  <input
-                    name="equipmentNote"
-                    placeholder="Condition, supplier, purpose, or next action"
-                  />
-                </label>
-                <label className="image-field">
-                  Photo
-                  <input
-                    accept="image/*"
-                    capture="environment"
-                    name="equipmentImage"
-                    onChange={chooseEquipmentImage}
-                    type="file"
-                  />
-                </label>
-                {equipmentImage && (
-                  <div className="image-preview">
-                    <img alt="Selected equipment preview" src={equipmentImage} />
-                    <button
-                      onClick={() => setEquipmentImage("")}
-                      type="button"
-                    >
-                      Remove photo
-                    </button>
+              <div className="equipment-manager">
+                <form className="entry-form equipment-form" onSubmit={submitEquipment}>
+                  <div className="form-section-title">
+                    <h3>Add equipment</h3>
+                    <p>Use camera on phone or upload an existing equipment photo.</p>
                   </div>
-                )}
-                <button disabled={isSavingEquipment} type="submit">
-                  Save equipment
-                </button>
-              </form>
+                  <label>
+                    Equipment name
+                    <input
+                      name="equipmentName"
+                      placeholder="Water pump, tiller, sprayer"
+                      required
+                    />
+                  </label>
+                  <label>
+                    Status
+                    <select name="equipmentStatus" defaultValue="available">
+                      <option value="available">Available</option>
+                      <option value="upcoming">Upcoming</option>
+                    </select>
+                  </label>
+                  <label>
+                    Quantity
+                    <input
+                      defaultValue="1"
+                      min="1"
+                      name="equipmentQuantity"
+                      required
+                      step="1"
+                      type="number"
+                    />
+                  </label>
+                  <label>
+                    Cost / estimate
+                    <input
+                      min="0"
+                      name="equipmentCost"
+                      placeholder="0.00"
+                      step="0.01"
+                      type="number"
+                    />
+                  </label>
+                  <label>
+                    Date
+                    <input name="equipmentDate" type="date" />
+                  </label>
+                  <label>
+                    Responsible owner
+                    <select name="equipmentOwner" defaultValue={activeOwner}>
+                      {owners.map((owner) => (
+                        <option key={owner.name} value={owner.name}>
+                          {owner.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="entry-note">
+                    Note
+                    <input
+                      name="equipmentNote"
+                      placeholder="Condition, supplier, purpose, or next action"
+                    />
+                  </label>
+                  <label className="image-field upload-card">
+                    Photo
+                    <input
+                      accept="image/*"
+                      capture="environment"
+                      name="equipmentImage"
+                      onChange={chooseEquipmentImage}
+                      type="file"
+                    />
+                    <span>Take picture or upload image, max 1.5MB.</span>
+                  </label>
+                  {equipmentImage && (
+                    <div className="image-preview">
+                      <img alt="Selected equipment preview" src={equipmentImage} />
+                      <button
+                        onClick={() => setEquipmentImage("")}
+                        type="button"
+                      >
+                        Remove photo
+                      </button>
+                    </div>
+                  )}
+                  <button disabled={isSavingEquipment} type="submit">
+                    Save equipment
+                  </button>
+                </form>
+                <div className="delete-queue">
+                  <h3>Delete approvals</h3>
+                  {equipmentData?.deletionRequests.length ? (
+                    equipmentData.deletionRequests.map((request) => (
+                      <div className="delete-request" key={request.id}>
+                        <strong>{request.itemName}</strong>
+                        <span>
+                          {request.approvalCount}/2 approvals
+                          {request.approvedBy.length
+                            ? ` by ${request.approvedBy.join(", ")}`
+                            : ""}
+                        </span>
+                        <span>Requested by {request.requestedBy}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No equipment deletion pending.</p>
+                  )}
+                </div>
+              </div>
               <div className="equipment-grid">
-                <div>
+                <div className="equipment-list-panel">
                   <h3>Available equipment</h3>
                   <p className="result-count">
                     {visibleAvailableEquipment.length} result
@@ -911,41 +1074,13 @@ export default function Home() {
                   </p>
                   <div className="entry-list">
                     {visibleAvailableEquipment.length ? (
-                      visibleAvailableEquipment.map((item) => (
-                        <article
-                          className="entry-card equipment-card available-equipment"
-                          key={item.id}
-                        >
-                          <div className="equipment-card-main">
-                            {item.imageData && (
-                              <img
-                                alt={`${item.name} equipment`}
-                                className="equipment-photo"
-                                src={item.imageData}
-                              />
-                            )}
-                            <div>
-                              <span className="status-pill">Available</span>
-                              <strong>{item.name}</strong>
-                              <span className="equipment-meta">
-                                Qty {item.quantity} | Rs{" "}
-                                {item.estimatedCost.toFixed(2)}
-                              </span>
-                              <span>Responsible: {item.ownerName}</span>
-                              {item.targetDate && (
-                                <span>Date: {item.targetDate}</span>
-                              )}
-                              {item.note && <span>Note: {item.note}</span>}
-                            </div>
-                          </div>
-                        </article>
-                      ))
+                      visibleAvailableEquipment.map(renderEquipmentCard)
                     ) : (
                       <p>No available equipment saved yet.</p>
                     )}
                   </div>
                 </div>
-                <div>
+                <div className="equipment-list-panel">
                   <h3>Upcoming equipment</h3>
                   <p className="result-count">
                     {visibleUpcomingEquipment.length} result
@@ -953,37 +1088,7 @@ export default function Home() {
                   </p>
                   <div className="entry-list">
                     {visibleUpcomingEquipment.length ? (
-                      visibleUpcomingEquipment.map((item) => (
-                        <article
-                          className="entry-card equipment-card upcoming-equipment"
-                          key={item.id}
-                        >
-                          <div className="equipment-card-main">
-                            {item.imageData && (
-                              <img
-                                alt={`${item.name} equipment`}
-                                className="equipment-photo"
-                                src={item.imageData}
-                              />
-                            )}
-                            <div>
-                              <span className="status-pill upcoming-pill">
-                                Upcoming
-                              </span>
-                              <strong>{item.name}</strong>
-                              <span className="equipment-meta">
-                                Qty {item.quantity} | estimated Rs{" "}
-                                {item.estimatedCost.toFixed(2)}
-                              </span>
-                              <span>Responsible: {item.ownerName}</span>
-                              {item.targetDate && (
-                                <span>Target date: {item.targetDate}</span>
-                              )}
-                              {item.note && <span>Note: {item.note}</span>}
-                            </div>
-                          </div>
-                        </article>
-                      ))
+                      visibleUpcomingEquipment.map(renderEquipmentCard)
                     ) : (
                       <p>No upcoming equipment saved yet.</p>
                     )}

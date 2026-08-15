@@ -98,10 +98,15 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Add entry for approval/);
   assert.match(page, /Pending approvals/);
   assert.match(page, /Equipment register/);
-  assert.match(page, /Available and upcoming equipment/);
+  assert.match(page, /Professional equipment database/);
   assert.match(page, /Search equipment/);
   assert.match(page, /visibleAvailableEquipment/);
   assert.match(page, /status-pill/);
+  assert.match(page, /Delete approvals/);
+  assert.match(page, /Request delete/);
+  assert.match(page, /requestDeleteEquipment/);
+  assert.match(page, /equipment-manager/);
+  assert.match(page, /upload-card/);
   assert.match(page, /capture="environment"/);
   assert.match(page, /2 owner approvals/);
   assert.match(page, /Database system/);
@@ -117,6 +122,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(entriesApproveRoute, /approveBusinessEntry/);
   assert.match(equipmentRoute, /createEquipmentItem/);
   assert.match(equipmentRoute, /listEquipment/);
+  assert.match(equipmentRoute, /requestEquipmentDeletion/);
+  assert.match(equipmentRoute, /DELETE/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
@@ -133,9 +140,12 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /business_entries/);
   assert.match(postgres, /entry_approvals/);
   assert.match(postgres, /equipment_items/);
+  assert.match(postgres, /equipment_delete_requests/);
+  assert.match(postgres, /equipment_delete_approvals/);
   assert.match(postgres, /image_data/);
   assert.match(postgres, /listEquipment/);
   assert.match(postgres, /createEquipmentItem/);
+  assert.match(postgres, /requestEquipmentDeletion/);
   assert.match(postgres, /approvalCount >= 2/);
   assert.match(postgres, /select id, created_by/);
   assert.match(postgres, /approvalCount: 1/);

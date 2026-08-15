@@ -2,6 +2,7 @@ import {
   createEquipmentItem,
   initializeDatabase,
   listEquipment,
+  requestEquipmentDeletion,
 } from "../../../db/postgres";
 
 function cleanText(value: unknown) {
@@ -59,6 +60,35 @@ export async function POST(request: Request) {
   } catch {
     return Response.json(
       { error: "Equipment could not be saved. Check the database connection." },
+      { status: 503 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    await initializeDatabase();
+
+    const payload = (await request.json()) as {
+      equipmentId?: string | number;
+      ownerName?: string;
+    };
+    const deletion = await requestEquipmentDeletion(
+      Number(payload.equipmentId),
+      cleanText(payload.ownerName),
+    );
+
+    if (!deletion) {
+      return Response.json(
+        { error: "Equipment could not be found for deletion." },
+        { status: 404 },
+      );
+    }
+
+    return Response.json({ deletion, equipment: await listEquipment() });
+  } catch {
+    return Response.json(
+      { error: "Equipment deletion could not be approved." },
       { status: 503 },
     );
   }
