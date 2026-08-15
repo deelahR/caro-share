@@ -33,6 +33,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
@@ -1077,21 +1078,87 @@ h2 {
 }
 
 @media (max-width: 760px) {
+  body {
+    font-size: 15px;
+  }
+
+  button,
+  input,
+  select {
+    min-height: 46px;
+  }
+
+  h1 {
+    max-width: none;
+    font-size: 2.5rem;
+    line-height: 0.96;
+  }
+
+  h2 {
+    font-size: 1rem;
+  }
+
+  .login-shell,
+  .app-shell {
+    padding: 12px;
+  }
+
   .login-panel {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .login-copy {
     min-height: auto;
+    padding: 22px;
   }
 
-  .start-panel,
+  .auth-card,
+  .workspace-header,
+  .content-panel {
+    padding: 16px;
+  }
+
   .workspace-header {
-    align-items: stretch;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 14px;
+  }
+
+  .workspace-header > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .owner-chip {
+    min-width: 0;
+  }
+
+  .workspace-header .notification-center {
+    justify-self: end;
+  }
+
+  .workspace-shell {
+    gap: 12px;
+  }
+
+  .workspace-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .workspace-nav button {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding-inline: 10px;
+    text-align: center;
   }
 
   .workspace-nav .logout-button {
+    grid-column: 1 / -1;
     margin-left: 0;
   }
 
@@ -1107,21 +1174,45 @@ h2 {
     box-shadow: none;
   }
 
+  .nav-menu > button {
+    justify-content: center;
+    padding-right: 10px;
+  }
+
   .nav-menu:hover .nav-menu-panel,
   .nav-menu:focus-within .nav-menu-panel {
     display: grid;
   }
 
+  .nav-menu-panel button {
+    justify-content: center;
+  }
+
   .metric-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .metric-grid div {
+    padding: 14px;
+  }
+
+  .metric-grid strong {
+    font-size: 1.25rem;
   }
 
   .module-overview {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .module-overview div {
+    padding: 10px;
   }
 
   .search-row {
     grid-template-columns: 1fr;
+    padding: 12px;
   }
 
   .equipment-manager,
@@ -1130,6 +1221,13 @@ h2 {
   .compact-form,
   .entry-form {
     grid-template-columns: 1fr;
+  }
+
+  .login-form button,
+  .profile-form button,
+  .entry-form button {
+    width: 100%;
+    min-width: 0;
   }
 
   .entry-note {
@@ -1153,9 +1251,17 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .equipment-form,
+  .equipment-list-panel,
+  .approval-group {
+    padding: 12px;
+  }
+
   .entry-card {
     align-items: stretch;
     flex-direction: column;
+    gap: 12px;
+    padding: 12px;
   }
 
   .equipment-card-main {
@@ -1175,6 +1281,17 @@ h2 {
     justify-items: stretch;
   }
 
+  .approval-actions button,
+  .database-actions button,
+  .image-preview button {
+    width: 100%;
+  }
+
+  .database-actions,
+  .image-preview {
+    display: grid;
+  }
+
   .panel-heading {
     display: grid;
   }
@@ -1190,5 +1307,21 @@ h2 {
     right: 12px;
     left: 12px;
     width: auto;
+  }
+}
+
+@media (max-width: 430px) {
+  .workspace-nav,
+  .metric-grid,
+  .module-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-header {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-header .notification-center {
+    justify-self: start;
   }
 }

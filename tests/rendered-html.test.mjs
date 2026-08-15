@@ -58,6 +58,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     equipmentRoute,
     recoverPinRoute,
     profileRoute,
+    globalsCss,
     postgres,
     layout,
     packageJson,
@@ -72,6 +73,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     readFile(new URL("../app/api/equipment/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/recover-pin/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/owners/profile/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../db/postgres.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -149,6 +151,12 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)/);
+  assert.match(globalsCss, /overflow-x: hidden/);
+  assert.match(globalsCss, /\.workspace-nav\s*{[\s\S]*grid-template-columns: repeat\(2/);
+  assert.match(globalsCss, /@media \(max-width: 430px\)/);
+  assert.match(globalsCss, /\.login-form button,[\s\S]*\.entry-form button\s*{[\s\S]*width: 100%/);
+  assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);
   assert.match(postgres, /scryptSync/);
   assert.match(postgres, /timingSafeEqual/);
   assert.match(postgres, /pin_hash/);
