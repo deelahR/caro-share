@@ -271,6 +271,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.menu-overlay\s*{[\s\S]*display: none/);
   assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.menu-toggle\s*{[\s\S]*display: grid/);
   assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*position: fixed/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*max-height: 100dvh/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*overscroll-behavior: contain/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*-webkit-overflow-scrolling: touch/);
+  assert.match(globalsCss, /env\(safe-area-inset-bottom\)/);
   assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav-open\s*{[\s\S]*translateX\(0\)/);
   assert.match(globalsCss, /@media \(max-width: 430px\)/);
   assert.match(globalsCss, /\.login-form button,[\s\S]*\.entry-form button\s*{[\s\S]*width: 100%/);
