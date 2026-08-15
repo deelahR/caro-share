@@ -234,10 +234,10 @@ h2 {
 }
 
 .workspace-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(420px, 1.6fr) auto auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  gap: 18px;
 }
 
 .workspace-header h1 {
@@ -392,6 +392,24 @@ h2 {
 .metric-grid strong {
   color: var(--ink);
   font-size: 1.55rem;
+}
+
+.header-metric-grid {
+  align-self: stretch;
+  gap: 8px;
+}
+
+.header-metric-grid div {
+  background: #fbfcfb;
+  padding: 12px;
+}
+
+.header-metric-grid span {
+  font-size: 0.72rem;
+}
+
+.header-metric-grid strong {
+  font-size: 1.25rem;
 }
 
 .module-overview {
@@ -1151,6 +1169,10 @@ h2 {
   }
 
   .workspace-header > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .header-metric-grid {
     grid-column: 1 / -1;
   }
 

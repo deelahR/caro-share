@@ -945,6 +945,26 @@ export default function Home() {
     (sum, entry) => sum + entry.amount,
     0,
   ) ?? 0;
+  const headerSummary = (
+    <section className="metric-grid header-metric-grid" aria-label="Business summary">
+      <div>
+        <span>Approval requests</span>
+        <strong>{approvalRequestCount}</strong>
+      </div>
+      <div>
+        <span>Accepted investment records</span>
+        <strong>{acceptedCount}</strong>
+      </div>
+      <div>
+        <span>Accepted amount</span>
+        <strong>Rs {totalAccepted.toFixed(2)}</strong>
+      </div>
+      <div>
+        <span>Equipment items</span>
+        <strong>{equipmentCount}</strong>
+      </div>
+    </section>
+  );
   const notificationCenter = (
     <div className="notification-center">
       <button
@@ -1046,6 +1066,7 @@ export default function Home() {
                 investment records, review approvals, and manage your account.
               </p>
             </div>
+            {headerSummary}
             <div className="owner-chip">
               <span>{ownerProfile?.displayName || activeOwner}</span>
               <small>{ownerProfile?.role || "Owner"}</small>
@@ -1162,25 +1183,6 @@ export default function Home() {
               Log out
             </button>
           </nav>
-
-          <section className="metric-grid" aria-label="Investment record summary">
-            <div>
-              <span>Approval requests</span>
-              <strong>{approvalRequestCount}</strong>
-            </div>
-            <div>
-              <span>Accepted investment records</span>
-              <strong>{acceptedCount}</strong>
-            </div>
-            <div>
-              <span>Accepted amount</span>
-              <strong>Rs {totalAccepted.toFixed(2)}</strong>
-            </div>
-            <div>
-              <span>Equipment items</span>
-              <strong>{equipmentCount}</strong>
-            </div>
-          </section>
 
           <section className="module-overview" aria-label="System modules">
             {[
