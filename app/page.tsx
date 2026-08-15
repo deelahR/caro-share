@@ -196,6 +196,14 @@ function formatNotificationTime(value: string) {
   });
 }
 
+function isDateInRange(value: string, startDate: string, endDate: string) {
+  if (!value) {
+    return !startDate && !endDate;
+  }
+
+  return (!startDate || value >= startDate) && (!endDate || value <= endDate);
+}
+
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
@@ -223,6 +231,10 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [equipmentImage, setEquipmentImage] = useState("");
   const [equipmentSearch, setEquipmentSearch] = useState("");
+  const [summaryOwnerFilter, setSummaryOwnerFilter] = useState("");
+  const [summaryTypeFilter, setSummaryTypeFilter] = useState("all");
+  const [summaryStartDate, setSummaryStartDate] = useState("");
+  const [summaryEndDate, setSummaryEndDate] = useState("");
   const [equipmentDraft, setEquipmentDraft] = useState<EquipmentDraft | null>(
     null,
   );
@@ -1127,15 +1139,80 @@ export default function Home() {
   });
   const ownerSummaries =
     businessSummary?.ownerSummaries ?? derivedOwnerSummaries;
-  const totalOwnerInvestment = ownerSummaries.reduce(
+  const hasSummaryFilters = Boolean(
+    summaryOwnerFilter ||
+      summaryTypeFilter !== "all" ||
+      summaryStartDate ||
+      summaryEndDate,
+  );
+  const summaryFilteredEntries = (entriesData?.accepted ?? []).filter(
+    (entry) =>
+      (!summaryOwnerFilter || entry.ownerName === summaryOwnerFilter) &&
+      (summaryTypeFilter === "all" || entry.entryType === summaryTypeFilter) &&
+      isDateInRange(entry.entryDate, summaryStartDate, summaryEndDate),
+  );
+  const summaryFilteredEquipment = approvedEquipment.filter(
+    (item) =>
+      (!summaryOwnerFilter || item.ownerName === summaryOwnerFilter) &&
+      isDateInRange(item.targetDate, summaryStartDate, summaryEndDate),
+  );
+  const summaryFilteredOwnerRows = owners
+    .filter((owner) => !summaryOwnerFilter || owner.name === summaryOwnerFilter)
+    .map<OwnerSummary>((owner) => {
+      const ownerEntries = summaryFilteredEntries.filter(
+        (entry) => entry.ownerName === owner.name,
+      );
+      const ownerEquipment = summaryFilteredEquipment.filter(
+        (item) => item.ownerName === owner.name,
+      );
+      const investment = ownerEntries.reduce(
+        (sum, entry) =>
+          sum + (entry.entryType === "investment" ? entry.amount : 0),
+        0,
+      );
+      const expense = ownerEntries.reduce(
+        (sum, entry) =>
+          sum + (entry.entryType === "expense" ? entry.amount : 0),
+        0,
+      );
+      const sale = ownerEntries.reduce(
+        (sum, entry) => sum + (entry.entryType === "sale" ? entry.amount : 0),
+        0,
+      );
+      const assetValue = ownerEquipment.reduce(
+        (sum, item) => sum + item.estimatedCost,
+        0,
+      );
+
+      return {
+        ownerName: owner.name,
+        investment,
+        expense,
+        sale,
+        assetValue,
+        netContribution: investment + sale + assetValue - expense,
+      };
+    });
+  const summaryOwnerRows = hasSummaryFilters
+    ? summaryFilteredOwnerRows
+    : ownerSummaries;
+  const totalOwnerInvestment = summaryOwnerRows.reduce(
     (sum, owner) => sum + owner.investment,
     0,
   );
-  const totalOwnerAssetValue = ownerSummaries.reduce(
+  const totalOwnerAssetValue = summaryOwnerRows.reduce(
     (sum, owner) => sum + owner.assetValue,
     0,
   );
-  const totalOwnerNetContribution = ownerSummaries.reduce(
+  const totalOwnerExpense = summaryOwnerRows.reduce(
+    (sum, owner) => sum + owner.expense,
+    0,
+  );
+  const totalOwnerSale = summaryOwnerRows.reduce(
+    (sum, owner) => sum + owner.sale,
+    0,
+  );
+  const totalOwnerNetContribution = summaryOwnerRows.reduce(
     (sum, owner) => sum + owner.netContribution,
     0,
   );
@@ -1659,8 +1736,72 @@ export default function Home() {
                     equipment.
                   </p>
                 </div>
-                <span className="role-badge">Phase 5</span>
+                <span className="role-badge">Phase 6</span>
               </div>
+              <div className="summary-filter-panel">
+                <label>
+                  Owner
+                  <select
+                    onChange={(event) => setSummaryOwnerFilter(event.target.value)}
+                    value={summaryOwnerFilter}
+                  >
+                    <option value="">All owners</option>
+                    {owners.map((owner) => (
+                      <option key={owner.name} value={owner.name}>
+                        {owner.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Record type
+                  <select
+                    onChange={(event) => setSummaryTypeFilter(event.target.value)}
+                    value={summaryTypeFilter}
+                  >
+                    <option value="all">All records</option>
+                    {Object.entries(entryTypeLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  From
+                  <input
+                    onChange={(event) => setSummaryStartDate(event.target.value)}
+                    type="date"
+                    value={summaryStartDate}
+                  />
+                </label>
+                <label>
+                  To
+                  <input
+                    onChange={(event) => setSummaryEndDate(event.target.value)}
+                    type="date"
+                    value={summaryEndDate}
+                  />
+                </label>
+                <button
+                  onClick={() => {
+                    setSummaryOwnerFilter("");
+                    setSummaryTypeFilter("all");
+                    setSummaryStartDate("");
+                    setSummaryEndDate("");
+                  }}
+                  type="button"
+                >
+                  Clear filters
+                </button>
+              </div>
+              <p className="summary-filter-note">
+                Showing {summaryFilteredEntries.length} accepted record
+                {summaryFilteredEntries.length === 1 ? "" : "s"} and{" "}
+                {summaryFilteredEquipment.length} approved equipment item
+                {summaryFilteredEquipment.length === 1 ? "" : "s"}
+                {hasSummaryFilters ? " matching the filters." : " in this report."}
+              </p>
               <div className="metric-grid dashboard-finance-grid">
                 <button
                   aria-label="Open accepted investment records from summary"
@@ -1676,7 +1817,7 @@ export default function Home() {
                   type="button"
                 >
                   <span>Total sales</span>
-                  <strong>Rs {totalSales.toFixed(2)}</strong>
+                  <strong>Rs {totalOwnerSale.toFixed(2)}</strong>
                 </button>
                 <button
                   aria-label="Open expense records from summary"
@@ -1684,7 +1825,7 @@ export default function Home() {
                   type="button"
                 >
                   <span>Total expenses</span>
-                  <strong>Rs {totalExpenses.toFixed(2)}</strong>
+                  <strong>Rs {totalOwnerExpense.toFixed(2)}</strong>
                 </button>
                 <button
                   aria-label="Open approved equipment from summary"
@@ -1717,7 +1858,7 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ownerSummaries.map((summary) => (
+                      {summaryOwnerRows.map((summary) => (
                         <tr key={summary.ownerName}>
                           <td>{summary.ownerName}</td>
                           <td>Rs {summary.investment.toFixed(2)}</td>

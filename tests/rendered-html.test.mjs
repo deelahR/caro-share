@@ -112,6 +112,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Summary/);
   assert.match(page, /dashboard-panel/);
   assert.match(page, /summary-panel/);
+  assert.match(page, /summary-filter-panel/);
+  assert.match(page, /summary-filter-note/);
   assert.match(page, /summary-table/);
   assert.match(page, /dashboard-metric-grid/);
   assert.match(page, /dashboard-finance-grid/);
@@ -135,7 +137,13 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Read-only totals from accepted records and approved/);
   assert.match(page, /Owner investment/);
   assert.match(page, /Summary report/);
-  assert.match(page, /Phase 5/);
+  assert.match(page, /Phase 6/);
+  assert.match(page, /Clear filters/);
+  assert.match(page, /All owners/);
+  assert.match(page, /All records/);
+  assert.match(page, /matching the filters/);
+  assert.match(page, /summaryFilteredEntries/);
+  assert.match(page, /summaryFilteredEquipment/);
   assert.match(page, /Review accepted records/);
   assert.match(page, /menu-toggle/);
   assert.match(page, /menu-overlay/);
@@ -266,6 +274,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.header-metric-grid/);
   assert.match(globalsCss, /\.dashboard-panel/);
   assert.match(globalsCss, /\.summary-panel/);
+  assert.match(globalsCss, /\.summary-filter-panel/);
+  assert.match(globalsCss, /\.summary-filter-note/);
   assert.match(globalsCss, /\.summary-table-wrap/);
   assert.match(globalsCss, /\.summary-table/);
   assert.match(globalsCss, /\.summary-actions/);
