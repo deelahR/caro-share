@@ -103,6 +103,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Change PIN/);
   assert.match(page, /Secure area/);
   assert.match(page, /workspace-nav/);
+  assert.match(page, /menu-toggle/);
+  assert.match(page, /menu-overlay/);
+  assert.match(page, /workspace-nav-open/);
   assert.match(page, /Investment Record/);
   assert.match(page, /isEquipmentContribution/);
   assert.match(page, /linkEquipmentContribution/);
@@ -198,7 +201,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.workspace-nav\s*{[\s\S]*position: sticky/);
   assert.match(globalsCss, /\.workspace-shell > \.content-panel/);
   assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-shell\s*{[\s\S]*grid-template-columns: 1fr/);
-  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*grid-template-columns: repeat\(2/);
+  assert.match(globalsCss, /\.menu-toggle\s*{[\s\S]*display: none/);
+  assert.match(globalsCss, /\.menu-overlay\s*{[\s\S]*display: none/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.menu-toggle\s*{[\s\S]*display: grid/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav\s*{[\s\S]*position: fixed/);
+  assert.match(globalsCss, /@media \(max-width: 760px\)[\s\S]*\.workspace-nav-open\s*{[\s\S]*translateX\(0\)/);
   assert.match(globalsCss, /@media \(max-width: 430px\)/);
   assert.match(globalsCss, /\.login-form button,[\s\S]*\.entry-form button\s*{[\s\S]*width: 100%/);
   assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);

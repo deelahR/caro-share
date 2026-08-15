@@ -198,6 +198,7 @@ export default function Home() {
   );
   const [activeEquipmentSection, setActiveEquipmentSection] =
     useState<EquipmentSection>("list");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
@@ -1068,6 +1069,17 @@ export default function Home() {
             </div>
             {headerSummary}
             <div className="header-actions">
+              <button
+                aria-expanded={isMenuOpen}
+                aria-label={isMenuOpen ? "Close workspace menu" : "Open workspace menu"}
+                className="menu-toggle"
+                onClick={() => setIsMenuOpen((current) => !current)}
+                type="button"
+              >
+                <span />
+                <span />
+                <span />
+              </button>
               <div className="owner-chip">
                 <span>{ownerProfile?.displayName || activeOwner}</span>
                 <small>{ownerProfile?.role || "Owner"}</small>
@@ -1076,7 +1088,19 @@ export default function Home() {
             </div>
           </header>
 
-          <nav className="workspace-nav" aria-label="Workspace navigation">
+          {isMenuOpen && (
+            <button
+              aria-label="Close workspace menu"
+              className="menu-overlay"
+              onClick={() => setIsMenuOpen(false)}
+              type="button"
+            />
+          )}
+
+          <nav
+            className={`workspace-nav ${isMenuOpen ? "workspace-nav-open" : ""}`}
+            aria-label="Workspace navigation"
+          >
             <div className="nav-menu">
               <button
                 className={
@@ -1084,7 +1108,10 @@ export default function Home() {
                     ? "nav-active"
                     : ""
                 }
-                onClick={() => setActiveSection("entries")}
+                onClick={() => {
+                  setActiveSection("entries");
+                  setIsMenuOpen(false);
+                }}
                 type="button"
               >
                 Investment Record
@@ -1097,7 +1124,10 @@ export default function Home() {
                   <button
                     className={activeSection === section ? "subnav-active" : ""}
                     key={section}
-                    onClick={() => setActiveSection(section as AppSection)}
+                    onClick={() => {
+                      setActiveSection(section as AppSection);
+                      setIsMenuOpen(false);
+                    }}
                     type="button"
                   >
                     {label}
@@ -1110,7 +1140,10 @@ export default function Home() {
               className={`approval-nav-button ${
                 activeSection === "approvals" ? "nav-active" : ""
               }`}
-              onClick={() => setActiveSection("approvals")}
+              onClick={() => {
+                setActiveSection("approvals");
+                setIsMenuOpen(false);
+              }}
               type="button"
             >
               Approvals
@@ -1124,6 +1157,7 @@ export default function Home() {
                 onClick={() => {
                   setActiveSection("equipment");
                   setActiveEquipmentSection("list");
+                  setIsMenuOpen(false);
                 }}
                 type="button"
               >
@@ -1145,6 +1179,7 @@ export default function Home() {
                     onClick={() => {
                       setActiveSection("equipment");
                       setActiveEquipmentSection(section as EquipmentSection);
+                      setIsMenuOpen(false);
                     }}
                     type="button"
                   >
@@ -1160,7 +1195,10 @@ export default function Home() {
                     ? "nav-active"
                     : ""
                 }
-                onClick={() => setActiveSection("account")}
+                onClick={() => {
+                  setActiveSection("account");
+                  setIsMenuOpen(false);
+                }}
                 type="button"
               >
                 Owner & System
@@ -1173,7 +1211,10 @@ export default function Home() {
                   <button
                     className={activeSection === section ? "subnav-active" : ""}
                     key={section}
-                    onClick={() => setActiveSection(section as AppSection)}
+                    onClick={() => {
+                      setActiveSection(section as AppSection);
+                      setIsMenuOpen(false);
+                    }}
                     type="button"
                   >
                     {label}
@@ -1181,7 +1222,14 @@ export default function Home() {
                 ))}
               </div>
             </div>
-            <button className="logout-button" onClick={logoutOwner} type="button">
+            <button
+              className="logout-button"
+              onClick={() => {
+                setIsMenuOpen(false);
+                logoutOwner();
+              }}
+              type="button"
+            >
               Log out
             </button>
           </nav>
