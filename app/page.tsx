@@ -96,6 +96,8 @@ type AppSection =
   | "account"
   | "system";
 
+type EquipmentSection = "add" | "list" | "delete";
+
 const owners: Owner[] = [
   { name: "Anish" },
   { name: "Anoup" },
@@ -144,6 +146,8 @@ export default function Home() {
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
   const [equipmentImage, setEquipmentImage] = useState("");
   const [equipmentSearch, setEquipmentSearch] = useState("");
+  const [activeEquipmentSection, setActiveEquipmentSection] =
+    useState<EquipmentSection>("list");
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [isSavingEquipment, setIsSavingEquipment] = useState(false);
   const [isApprovingEntry, setIsApprovingEntry] = useState<number | null>(null);
@@ -558,6 +562,7 @@ export default function Home() {
     setSecurityMessage("");
     setNotification(null);
     setActiveSection("entries");
+    setActiveEquipmentSection("list");
   }
 
   useEffect(() => {
@@ -718,7 +723,6 @@ export default function Home() {
               ["entries", "New entry"],
               ["approvals", `Approvals (${pendingCount})`],
               ["records", "Accepted records"],
-              ["equipment", "Equipment"],
               ["account", "Account"],
               ["system", "System"],
             ].map(([section, label]) => (
@@ -732,6 +736,37 @@ export default function Home() {
                 {label}
               </button>
             ))}
+            <details className="nav-menu" open={activeSection === "equipment"}>
+              <summary
+                className={activeSection === "equipment" ? "nav-active" : ""}
+              >
+                Equipment
+              </summary>
+              <div className="nav-menu-panel">
+                {[
+                  ["list", `Equipment list (${equipmentCount})`],
+                  ["add", "Add equipment"],
+                  ["delete", `Delete approvals (${deletionRequestCount})`],
+                ].map(([section, label]) => (
+                  <button
+                    className={
+                      activeSection === "equipment" &&
+                      activeEquipmentSection === section
+                        ? "subnav-active"
+                        : ""
+                    }
+                    key={section}
+                    onClick={() => {
+                      setActiveSection("equipment");
+                      setActiveEquipmentSection(section as EquipmentSection);
+                    }}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </details>
             <button className="logout-button" onClick={logoutOwner} type="button">
               Log out
             </button>
@@ -933,8 +968,8 @@ export default function Home() {
                   <p className="eyebrow">Equipment register</p>
                   <h2>Professional equipment database</h2>
                   <p>
-                    Track photos, costs, owners, upcoming purchases, and
-                    deletion approvals in one place.
+                    Use the Equipment menu to add items, view the list, or
+                    manage deletion approvals.
                   </p>
                 </div>
                 <span className="role-badge">
@@ -942,21 +977,7 @@ export default function Home() {
                   {deletionRequestCount === 1 ? "" : "s"}
                 </span>
               </div>
-              <div className="search-row">
-                <label>
-                  Search equipment
-                  <input
-                    onChange={(event) => setEquipmentSearch(event.target.value)}
-                    placeholder="Search by name, owner, note, or date"
-                    type="search"
-                    value={equipmentSearch}
-                  />
-                </label>
-                <span>
-                  Showing {visibleEquipmentCount} of {equipmentCount} items
-                </span>
-              </div>
-              <div className="equipment-manager">
+              {activeEquipmentSection === "add" && (
                 <form className="entry-form equipment-form" onSubmit={submitEquipment}>
                   <div className="form-section-title">
                     <h3>Add equipment</h3>
@@ -1045,6 +1066,8 @@ export default function Home() {
                     Save equipment
                   </button>
                 </form>
+              )}
+              {activeEquipmentSection === "delete" && (
                 <div className="delete-queue">
                   <h3>Delete approvals</h3>
                   {equipmentData?.deletionRequests.length ? (
@@ -1064,37 +1087,57 @@ export default function Home() {
                     <p>No equipment deletion pending.</p>
                   )}
                 </div>
-              </div>
-              <div className="equipment-grid">
-                <div className="equipment-list-panel">
-                  <h3>Available equipment</h3>
-                  <p className="result-count">
-                    {visibleAvailableEquipment.length} result
-                    {visibleAvailableEquipment.length === 1 ? "" : "s"}
-                  </p>
-                  <div className="entry-list">
-                    {visibleAvailableEquipment.length ? (
-                      visibleAvailableEquipment.map(renderEquipmentCard)
-                    ) : (
-                      <p>No available equipment saved yet.</p>
-                    )}
+              )}
+              {activeEquipmentSection === "list" && (
+                <>
+                  <div className="search-row">
+                    <label>
+                      Search equipment
+                      <input
+                        onChange={(event) =>
+                          setEquipmentSearch(event.target.value)
+                        }
+                        placeholder="Search by name, owner, note, or date"
+                        type="search"
+                        value={equipmentSearch}
+                      />
+                    </label>
+                    <span>
+                      Showing {visibleEquipmentCount} of {equipmentCount} items
+                    </span>
                   </div>
-                </div>
-                <div className="equipment-list-panel">
-                  <h3>Upcoming equipment</h3>
-                  <p className="result-count">
-                    {visibleUpcomingEquipment.length} result
-                    {visibleUpcomingEquipment.length === 1 ? "" : "s"}
-                  </p>
-                  <div className="entry-list">
-                    {visibleUpcomingEquipment.length ? (
-                      visibleUpcomingEquipment.map(renderEquipmentCard)
-                    ) : (
-                      <p>No upcoming equipment saved yet.</p>
-                    )}
+                  <div className="equipment-grid">
+                    <div className="equipment-list-panel">
+                      <h3>Available equipment</h3>
+                      <p className="result-count">
+                        {visibleAvailableEquipment.length} result
+                        {visibleAvailableEquipment.length === 1 ? "" : "s"}
+                      </p>
+                      <div className="entry-list">
+                        {visibleAvailableEquipment.length ? (
+                          visibleAvailableEquipment.map(renderEquipmentCard)
+                        ) : (
+                          <p>No available equipment saved yet.</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="equipment-list-panel">
+                      <h3>Upcoming equipment</h3>
+                      <p className="result-count">
+                        {visibleUpcomingEquipment.length} result
+                        {visibleUpcomingEquipment.length === 1 ? "" : "s"}
+                      </p>
+                      <div className="entry-list">
+                        {visibleUpcomingEquipment.length ? (
+                          visibleUpcomingEquipment.map(renderEquipmentCard)
+                        ) : (
+                          <p>No upcoming equipment saved yet.</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </section>
           )}
 

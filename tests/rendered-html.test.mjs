@@ -102,10 +102,13 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Search equipment/);
   assert.match(page, /visibleAvailableEquipment/);
   assert.match(page, /status-pill/);
+  assert.match(page, /activeEquipmentSection/);
+  assert.match(page, /Equipment list/);
+  assert.match(page, /Add equipment/);
   assert.match(page, /Delete approvals/);
   assert.match(page, /Request delete/);
   assert.match(page, /requestDeleteEquipment/);
-  assert.match(page, /equipment-manager/);
+  assert.match(page, /nav-menu/);
   assert.match(page, /upload-card/);
   assert.match(page, /capture="environment"/);
   assert.match(page, /2 owner approvals/);
