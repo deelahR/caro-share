@@ -184,6 +184,9 @@ export default function Home() {
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const unreadNotificationCount = notifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
   const [entriesData, setEntriesData] = useState<EntriesData | null>(null);
   const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
@@ -277,20 +280,22 @@ export default function Home() {
   }, [showNotification]);
 
   const loadNotifications = useCallback(
-    async (ownerName: string) => {
-      const response = await fetch(
-        `/api/notifications?owner=${encodeURIComponent(ownerName)}`,
-      );
+    async (showErrors = true) => {
+      const response = await fetch("/api/notifications");
       const payload = (await response.json()) as {
         notifications?: Notification[];
         error?: string;
       };
 
       if (!response.ok || !payload.notifications) {
-        showNotification(
-          "error",
-          payload.error || "Notifications could not be loaded.",
-        );
+        if (showErrors) {
+          showNotification(
+            "error",
+            response.status === 401
+              ? "Please log in again to load notifications."
+              : payload.error || "Notifications could not be loaded.",
+          );
+        }
         return;
       }
 
@@ -470,7 +475,7 @@ export default function Home() {
       setSelectedEntryType("expense");
       setSelectedCategory("");
       await loadEntries();
-      await loadNotifications(activeOwner);
+      await loadNotifications();
     } finally {
       setIsSavingEntry(false);
     }
@@ -523,7 +528,7 @@ export default function Home() {
       } else {
         await loadEntries();
       }
-      await loadNotifications(activeOwner);
+      await loadNotifications();
 
       showNotification(
         "success",
@@ -576,7 +581,7 @@ export default function Home() {
       setEquipmentImage("");
       setEquipmentDraft(null);
       await loadEquipment();
-      await loadNotifications(activeOwner);
+      await loadNotifications();
     } finally {
       setIsSavingEquipment(false);
     }
@@ -633,7 +638,7 @@ export default function Home() {
       } else {
         await loadEquipment();
       }
-      await loadNotifications(activeOwner);
+      await loadNotifications();
 
       showNotification(
         "success",
@@ -674,7 +679,7 @@ export default function Home() {
       } else {
         await loadEquipment();
       }
-      await loadNotifications(activeOwner);
+      await loadNotifications();
 
       showNotification(
         "success",
@@ -707,7 +712,7 @@ export default function Home() {
       const status = (await response.json()) as DatabaseStatus;
       setDatabaseStatus(status);
       if (activeOwner) {
-        await loadNotifications(activeOwner);
+        await loadNotifications();
       }
     } finally {
       setIsCheckingDatabase(false);
@@ -723,7 +728,7 @@ export default function Home() {
     const response = await fetch("/api/notifications", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ownerName: activeOwner }),
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
@@ -734,7 +739,41 @@ export default function Home() {
     setNotifications([]);
   }
 
+  async function dismissNotification(notificationId: number) {
+    setNotifications((current) =>
+      current.filter((notification) => notification.id !== notificationId),
+    );
+
+    const response = await fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationId }),
+    });
+
+    if (!response.ok) {
+      showNotification("error", "Notification could not be dismissed.");
+      await loadNotifications();
+    }
+  }
+
+  async function markNotificationsRead() {
+    if (!unreadNotificationCount) {
+      return;
+    }
+
+    setNotifications((current) =>
+      current.map((notification) => ({ ...notification, isRead: true })),
+    );
+
+    const response = await fetch("/api/notifications", { method: "PATCH" });
+
+    if (!response.ok) {
+      await loadNotifications(false);
+    }
+  }
+
   function logoutOwner() {
+    void fetch("/api/auth/logout", { method: "POST" });
     window.localStorage.removeItem(ownerSessionKey);
     setActiveOwner("");
     setOwnerProfile(null);
@@ -753,10 +792,22 @@ export default function Home() {
         void loadOwnerProfile(activeOwner);
         void loadEntries();
         void loadEquipment();
-        void loadNotifications(activeOwner);
+        void loadNotifications();
       });
     }
   }, [activeOwner, loadEntries, loadEquipment, loadNotifications]);
+
+  useEffect(() => {
+    if (!activeOwner) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadNotifications(false);
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, [activeOwner, loadNotifications]);
 
   const categories = entriesData?.categories ?? {};
   const selectedCategories = categories[selectedEntryType] ?? [];
@@ -898,11 +949,16 @@ export default function Home() {
     <div className="notification-center">
       <button
         aria-expanded={isNotificationOpen}
-        aria-label={`Notifications, ${notifications.length} message${
-          notifications.length === 1 ? "" : "s"
+        aria-label={`Notifications, ${unreadNotificationCount} unread message${
+          unreadNotificationCount === 1 ? "" : "s"
         }`}
         className="bell-button"
-        onClick={() => setIsNotificationOpen((current) => !current)}
+        onClick={() => {
+          setIsNotificationOpen((current) => !current);
+          if (!isNotificationOpen) {
+            void markNotificationsRead();
+          }
+        }}
         type="button"
       >
         <svg
@@ -927,8 +983,8 @@ export default function Home() {
             strokeWidth="2"
           />
         </svg>
-        {notifications.length > 0 && (
-          <span className="notification-count">{notifications.length}</span>
+        {unreadNotificationCount > 0 && (
+          <span className="notification-count">{unreadNotificationCount}</span>
         )}
       </button>
       {isNotificationOpen && (
@@ -959,11 +1015,9 @@ export default function Home() {
                   </div>
                   <button
                     aria-label="Dismiss notification"
-                    onClick={() =>
-                      setNotifications((current) =>
-                        current.filter((notification) => notification.id !== item.id),
-                      )
-                    }
+                    onClick={() => {
+                      void dismissNotification(item.id);
+                    }}
                     type="button"
                   >
                     X

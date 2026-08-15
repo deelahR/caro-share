@@ -1,4 +1,5 @@
 import { authenticateOwner, initializeDatabase } from "../../../../db/postgres";
+import { ownerSessionHeader } from "../owner-session";
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,10 @@ export async function POST(request: Request) {
       );
     }
 
-    return Response.json({ owner });
+    return Response.json(
+      { owner },
+      { headers: { "Set-Cookie": ownerSessionHeader(owner.name) } },
+    );
   } catch {
     return Response.json(
       { error: "Owner login is unavailable. Check the database connection." },

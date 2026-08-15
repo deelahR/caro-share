@@ -652,10 +652,6 @@ export async function initializeDatabase() {
       );
     }
 
-    await client.query(
-      "insert into app_events (owner_name, action) values ($1, $2)",
-      ["Anish", "Initialized AgriBro database"],
-    );
     await client.query("commit");
   } catch (error) {
     await client.query("rollback");
@@ -871,6 +867,35 @@ export async function listOwnerNotifications(
   );
 
   return result.rows.map(mapOwnerNotification);
+}
+
+export async function markOwnerNotificationsRead(ownerName: string) {
+  if (!ownerName) {
+    return { updated: 0 };
+  }
+
+  const result = await getPool().query(
+    "update owner_notifications set is_read = true where owner_name = $1 and is_read = false",
+    [ownerName],
+  );
+
+  return { updated: result.rowCount || 0 };
+}
+
+export async function dismissOwnerNotification(
+  ownerName: string,
+  notificationId: number,
+) {
+  if (!ownerName || !notificationId) {
+    return { deleted: 0 };
+  }
+
+  const result = await getPool().query(
+    "delete from owner_notifications where owner_name = $1 and id = $2",
+    [ownerName, notificationId],
+  );
+
+  return { deleted: result.rowCount || 0 };
 }
 
 export async function clearOwnerNotifications(ownerName: string) {

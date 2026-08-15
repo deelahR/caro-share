@@ -52,7 +52,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   const [
     page,
     authRoute,
+    authSession,
     changePinRoute,
+    logoutRoute,
     entriesRoute,
     entriesApproveRoute,
     equipmentRoute,
@@ -68,7 +70,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   ] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/login/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/owner-session.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/change-pin/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/logout/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/entries/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/entries/approve/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/equipment/route.ts", import.meta.url), "utf8"),
@@ -88,6 +92,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /loginOwner/);
   assert.match(page, /logoutOwner/);
   assert.match(page, /\/api\/auth\/login/);
+  assert.match(page, /\/api\/auth\/logout/);
   assert.match(page, /\/api\/auth\/change-pin/);
   assert.match(page, /\/api\/auth\/recover-pin/);
   assert.match(page, /\/api\/owners\/profile/);
@@ -114,6 +119,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Clear all/);
   assert.match(page, /loadNotifications/);
   assert.match(page, /clearNotifications/);
+  assert.match(page, /dismissNotification/);
+  assert.match(page, /markNotificationsRead/);
+  assert.match(page, /unreadNotificationCount/);
+  assert.match(page, /setInterval/);
+  assert.match(page, /30_000/);
   assert.match(page, /\/api\/notifications/);
   assert.match(page, /Recover PIN/);
   assert.match(page, /Add record for approval/);
@@ -151,6 +161,13 @@ test("removes starter preview code and documents Render deployment", async () =>
     /pin:\s*"1111"|splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
   );
   assert.match(authRoute, /authenticateOwner/);
+  assert.match(authRoute, /ownerSessionHeader/);
+  assert.match(authRoute, /Set-Cookie/);
+  assert.match(authSession, /createHmac/);
+  assert.match(authSession, /HttpOnly/);
+  assert.match(authSession, /SameSite=Strict/);
+  assert.match(authSession, /getSessionOwner/);
+  assert.match(logoutRoute, /clearOwnerSessionHeader/);
   assert.match(changePinRoute, /changeOwnerPin/);
   assert.match(entriesRoute, /createBusinessEntry/);
   assert.match(entriesRoute, /listBusinessEntries/);
@@ -161,7 +178,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(equipmentRoute, /requestEquipmentDeletion/);
   assert.match(equipmentRoute, /DELETE/);
   assert.match(notificationsRoute, /listOwnerNotifications/);
+  assert.match(notificationsRoute, /getSessionOwner/);
+  assert.match(notificationsRoute, /markOwnerNotificationsRead/);
+  assert.match(notificationsRoute, /dismissOwnerNotification/);
   assert.match(notificationsRoute, /clearOwnerNotifications/);
+  assert.match(notificationsRoute, /PATCH/);
   assert.match(notificationsRoute, /DELETE/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
@@ -194,7 +215,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /createOwnerNotification/);
   assert.match(postgres, /createOtherOwnerNotifications/);
   assert.match(postgres, /listOwnerNotifications/);
+  assert.match(postgres, /markOwnerNotificationsRead/);
+  assert.match(postgres, /dismissOwnerNotification/);
   assert.match(postgres, /clearOwnerNotifications/);
+  assert.doesNotMatch(postgres, /Initialized AgriBro database/);
   assert.match(postgres, /image_data/);
   assert.match(postgres, /listEquipment/);
   assert.match(postgres, /createEquipmentAddRequest/);
