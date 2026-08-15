@@ -733,6 +733,7 @@ export default function Home() {
   const renderEquipmentCard = (item: EquipmentItem) => {
     const isUpcoming = item.status === "upcoming";
     const isDeletionPending = Boolean(item.deletionRequestId);
+    const hasApprovedDeletion = item.deletionApprovedBy.includes(activeOwner);
 
     return (
       <article
@@ -785,7 +786,32 @@ export default function Home() {
                 ? ` by ${item.deletionApprovedBy.join(", ")}`
                 : ""}
             </span>
-            <small>Approve or reject equipment removal in Approvals.</small>
+            <small>
+              {hasApprovedDeletion
+                ? "You accepted this removal. Another owner must approve it in Approvals."
+                : "Approve this equipment removal in Approvals."}
+            </small>
+          </div>
+        )}
+        {!isDeletionPending && (
+          <div className="equipment-card-actions">
+            <small>Removal needs 2 owner approvals before it leaves the list.</small>
+            <button
+              className="danger-button"
+              disabled={isDeletingEquipment === item.id}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Send "${item.name}" removal for owner approval?`,
+                  )
+                ) {
+                  void requestDeleteEquipment(item.id);
+                }
+              }}
+              type="button"
+            >
+              {isDeletingEquipment === item.id ? "Sending..." : "Remove item"}
+            </button>
           </div>
         )}
       </article>

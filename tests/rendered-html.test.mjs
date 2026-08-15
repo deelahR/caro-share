@@ -132,6 +132,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Request equipment addition/);
   assert.match(page, /Submit for approval/);
   assert.match(page, /Removal approval pending/);
+  assert.match(page, /Remove item/);
   assert.match(page, /requestDeleteEquipment/);
   assert.doesNotMatch(page, /Approve delete|Approved delete|Request delete/);
   assert.match(page, /nav-menu/);
@@ -163,6 +164,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /@media \(max-width: 430px\)/);
   assert.match(globalsCss, /\.login-form button,[\s\S]*\.entry-form button\s*{[\s\S]*width: 100%/);
   assert.match(globalsCss, /\.notification-panel\s*{[\s\S]*position: fixed/);
+  assert.match(globalsCss, /\.equipment-card-actions/);
   assert.match(postgres, /scryptSync/);
   assert.match(postgres, /timingSafeEqual/);
   assert.match(postgres, /pin_hash/);
