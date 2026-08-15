@@ -108,8 +108,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Approval requests/);
   assert.match(page, /Approval module/);
   assert.match(page, /All add and remove requests/);
-  assert.match(page, /Add requests/);
-  assert.match(page, /Remove requests/);
+  assert.match(page, /Entry approvals/);
+  assert.match(page, /Removal approvals/);
   assert.match(page, /approvalRequestCount/);
   assert.match(page, /Equipment register/);
   assert.match(page, /Professional equipment database/);
@@ -119,8 +119,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /activeEquipmentSection/);
   assert.match(page, /Equipment list/);
   assert.match(page, /Add equipment/);
-  assert.match(page, /Request delete/);
+  assert.match(page, /Removal approval pending/);
   assert.match(page, /requestDeleteEquipment/);
+  assert.doesNotMatch(page, /Approve delete|Approved delete|Request delete/);
   assert.match(page, /nav-menu/);
   assert.match(page, /upload-card/);
   assert.match(page, /capture="environment"/);

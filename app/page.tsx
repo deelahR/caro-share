@@ -620,7 +620,6 @@ export default function Home() {
   const renderEquipmentCard = (item: EquipmentItem) => {
     const isUpcoming = item.status === "upcoming";
     const isDeletionPending = Boolean(item.deletionRequestId);
-    const hasApprovedDeletion = item.deletionApprovedBy.includes(activeOwner);
 
     return (
       <article
@@ -665,28 +664,17 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="equipment-card-actions">
-          {isDeletionPending && (
+        {isDeletionPending && (
+          <div className="equipment-card-status">
             <span>
-              Delete approval: {item.deletionApprovalCount}/2
+              Removal approval pending: {item.deletionApprovalCount}/2
               {item.deletionApprovedBy.length
                 ? ` by ${item.deletionApprovedBy.join(", ")}`
                 : ""}
             </span>
-          )}
-          <button
-            className="danger-button"
-            disabled={isDeletingEquipment === item.id || hasApprovedDeletion}
-            onClick={() => requestDeleteEquipment(item.id)}
-            type="button"
-          >
-            {hasApprovedDeletion
-              ? "Approved delete"
-              : isDeletionPending
-                ? "Approve delete"
-                : "Request delete"}
-          </button>
-        </div>
+            <small>Approve or reject equipment removal in Approvals.</small>
+          </div>
+        )}
       </article>
     );
   };
@@ -1030,7 +1018,7 @@ export default function Home() {
                   <p>
                     {approvalRequestCount
                       ? `${approvalRequestCount} request needs owner approval.`
-                      : "No add or remove requests are waiting for approval."}
+                      : "No entry or removal approvals are waiting."}
                   </p>
                 </div>
                 <span className="role-badge">2 approvals required</span>
@@ -1038,7 +1026,7 @@ export default function Home() {
               <div className="approval-module">
                 <div className="approval-group">
                   <div className="approval-group-heading">
-                    <h3>Add requests</h3>
+                    <h3>Entry approvals</h3>
                     <span>{pendingCount} pending</span>
                   </div>
                   <div className="entry-list">
@@ -1084,13 +1072,13 @@ export default function Home() {
                         </article>
                       ))
                     ) : (
-                      <p>No add requests pending.</p>
+                      <p>No entry approvals pending.</p>
                     )}
                   </div>
                 </div>
                 <div className="approval-group remove-approval-group">
                   <div className="approval-group-heading">
-                    <h3>Remove requests</h3>
+                    <h3>Removal approvals</h3>
                     <span>{deletionRequestCount} pending</span>
                   </div>
                   <div className="entry-list">
@@ -1136,7 +1124,7 @@ export default function Home() {
                         );
                       })
                     ) : (
-                      <p>No remove requests pending.</p>
+                      <p>No removal approvals pending.</p>
                     )}
                   </div>
                 </div>

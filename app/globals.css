@@ -737,19 +737,24 @@ h2 {
   gap: 4px 10px;
 }
 
-.equipment-card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.equipment-card-status {
+  display: grid;
   gap: 12px;
   border-top: 1px solid var(--line);
   padding-top: 12px;
 }
 
-.equipment-card-actions span {
+.equipment-card-status span {
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 800;
+}
+
+.equipment-card-status small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .danger-button {
@@ -1114,13 +1119,8 @@ h2 {
     height: 180px;
   }
 
-  .equipment-detail-grid,
-  .equipment-card-actions {
+  .equipment-detail-grid {
     grid-template-columns: 1fr;
-  }
-
-  .equipment-card-actions {
-    display: grid;
   }
 
   .approval-actions {
