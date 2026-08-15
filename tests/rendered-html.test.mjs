@@ -141,6 +141,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Clear filters/);
   assert.match(page, /All owners/);
   assert.match(page, /All records/);
+  assert.match(page, /Export CSV/);
+  assert.match(page, /exportSummaryCsv/);
+  assert.match(page, /formatCsvCell/);
+  assert.match(page, /agribro-summary/);
+  assert.match(page, /Summary CSV downloaded/);
   assert.match(page, /matching the filters/);
   assert.match(page, /summaryFilteredEntries/);
   assert.match(page, /summaryFilteredEquipment/);

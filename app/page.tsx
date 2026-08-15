@@ -204,6 +204,16 @@ function isDateInRange(value: string, startDate: string, endDate: string) {
   return (!startDate || value >= startDate) && (!endDate || value <= endDate);
 }
 
+function formatCsvCell(value: string | number) {
+  const text = String(value);
+
+  if (/[",\n]/.test(text)) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  return text;
+}
+
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
   const [activeSection, setActiveSection] = useState<AppSection>("dashboard");
@@ -1216,6 +1226,62 @@ export default function Home() {
     (sum, owner) => sum + owner.netContribution,
     0,
   );
+  function exportSummaryCsv() {
+    const lines = [
+      ["AgriBro summary report"],
+      ["Generated", new Date().toLocaleString()],
+      [
+        "Owner filter",
+        summaryOwnerFilter || "All owners",
+        "Record type",
+        summaryTypeFilter === "all"
+          ? "All records"
+          : entryTypeLabels[summaryTypeFilter],
+        "From",
+        summaryStartDate || "Any",
+        "To",
+        summaryEndDate || "Any",
+      ],
+      [],
+      ["Metric", "Amount"],
+      ["Owner investment", totalOwnerInvestment.toFixed(2)],
+      ["Total sales", totalOwnerSale.toFixed(2)],
+      ["Total expenses", totalOwnerExpense.toFixed(2)],
+      ["Asset value", totalOwnerAssetValue.toFixed(2)],
+      ["Net contribution", totalOwnerNetContribution.toFixed(2)],
+      [],
+      [
+        "Owner",
+        "Investment",
+        "Sale",
+        "Expense",
+        "Asset value",
+        "Net contribution",
+      ],
+      ...summaryOwnerRows.map((summary) => [
+        summary.ownerName,
+        summary.investment.toFixed(2),
+        summary.sale.toFixed(2),
+        summary.expense.toFixed(2),
+        summary.assetValue.toFixed(2),
+        summary.netContribution.toFixed(2),
+      ]),
+    ];
+    const csv = lines
+      .map((line) => line.map((cell) => formatCsvCell(cell)).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `agribro-summary-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showNotification("success", "Summary CSV downloaded.");
+  }
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
       <button
@@ -1872,6 +1938,9 @@ export default function Home() {
                   </table>
                 </div>
                 <div className="summary-actions">
+                  <button onClick={exportSummaryCsv} type="button">
+                    Export CSV
+                  </button>
                   <button onClick={() => openShortcut("records")} type="button">
                     Review accepted records
                   </button>
