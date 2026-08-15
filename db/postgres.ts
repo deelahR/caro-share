@@ -22,6 +22,9 @@ export type BusinessSummary = {
   netBalance: number;
   totalSales: number;
   totalExpenses: number;
+  totalAssetValue: number;
+  availableAssetValue: number;
+  upcomingAssetValue: number;
   equipmentItems: number;
 };
 
@@ -944,6 +947,9 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     total_credit: string | null;
     total_sales: string | null;
     total_expenses: string | null;
+    total_asset_value: string | null;
+    available_asset_value: string | null;
+    upcoming_asset_value: string | null;
     equipment_items: string;
     equipment_add_requests: string;
     equipment_delete_requests: string;
@@ -972,6 +978,20 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
         from business_entries
         where status = 'accepted' and entry_type = 'expense'
       ) as total_expenses,
+      (
+        select coalesce(sum(estimated_cost), 0)
+        from equipment_items
+      ) as total_asset_value,
+      (
+        select coalesce(sum(estimated_cost), 0)
+        from equipment_items
+        where status = 'available'
+      ) as available_asset_value,
+      (
+        select coalesce(sum(estimated_cost), 0)
+        from equipment_items
+        where status = 'upcoming'
+      ) as upcoming_asset_value,
       (select count(*) from equipment_items) as equipment_items,
       (select count(*) from equipment_add_requests where status = 'pending') as equipment_add_requests,
       (select count(*) from equipment_delete_requests where status = 'pending') as equipment_delete_requests
@@ -993,6 +1013,9 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     netBalance: totalCredit - totalDebit,
     totalSales: Number(summary.total_sales || 0),
     totalExpenses: Number(summary.total_expenses || 0),
+    totalAssetValue: Number(summary.total_asset_value || 0),
+    availableAssetValue: Number(summary.available_asset_value || 0),
+    upcomingAssetValue: Number(summary.upcoming_asset_value || 0),
     equipmentItems: Number(summary.equipment_items || 0),
   };
 }

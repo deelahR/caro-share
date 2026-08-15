@@ -36,6 +36,9 @@ type BusinessSummary = {
   netBalance: number;
   totalSales: number;
   totalExpenses: number;
+  totalAssetValue: number;
+  availableAssetValue: number;
+  upcomingAssetValue: number;
   equipmentItems: number;
 };
 
@@ -1055,6 +1058,28 @@ export default function Home() {
   const netBalance = businessSummary?.netBalance ?? totalCredit - totalDebit;
   const totalSales = businessSummary?.totalSales ?? derivedTotalSales;
   const totalExpenses = businessSummary?.totalExpenses ?? derivedTotalDebit;
+  const approvedEquipment = [
+    ...(equipmentData?.available ?? []),
+    ...(equipmentData?.upcoming ?? []),
+  ];
+  const derivedTotalAssetValue = approvedEquipment.reduce(
+    (sum, item) => sum + item.estimatedCost,
+    0,
+  );
+  const derivedAvailableAssetValue = (equipmentData?.available ?? []).reduce(
+    (sum, item) => sum + item.estimatedCost,
+    0,
+  );
+  const derivedUpcomingAssetValue = (equipmentData?.upcoming ?? []).reduce(
+    (sum, item) => sum + item.estimatedCost,
+    0,
+  );
+  const totalAssetValue =
+    businessSummary?.totalAssetValue ?? derivedTotalAssetValue;
+  const availableAssetValue =
+    businessSummary?.availableAssetValue ?? derivedAvailableAssetValue;
+  const upcomingAssetValue =
+    businessSummary?.upcomingAssetValue ?? derivedUpcomingAssetValue;
   const headerSummary = (
     <section className="metric-grid header-metric-grid" aria-label="Business summary">
       <button
@@ -1383,10 +1408,10 @@ export default function Home() {
                   <h2>Business summary</h2>
                   <p>
                     Quick view of approvals, accepted records, debit, credit,
-                    balance, and approved equipment.
+                    balance, and approved assets.
                   </p>
                 </div>
-                <span className="role-badge">Phase 2</span>
+                <span className="role-badge">Phase 3</span>
               </div>
               <div className="metric-grid dashboard-metric-grid">
                 <button
@@ -1462,6 +1487,32 @@ export default function Home() {
                 >
                   <span>Total expenses</span>
                   <strong>Rs {totalExpenses.toFixed(2)}</strong>
+                </button>
+              </div>
+              <div className="metric-grid dashboard-asset-grid">
+                <button
+                  aria-label="Open asset value from dashboard"
+                  onClick={() => openShortcut("equipment", "list")}
+                  type="button"
+                >
+                  <span>Total asset value</span>
+                  <strong>Rs {totalAssetValue.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open available asset value from dashboard"
+                  onClick={() => openShortcut("equipment", "list")}
+                  type="button"
+                >
+                  <span>Available asset value</span>
+                  <strong>Rs {availableAssetValue.toFixed(2)}</strong>
+                </button>
+                <button
+                  aria-label="Open upcoming asset value from dashboard"
+                  onClick={() => openShortcut("equipment", "list")}
+                  type="button"
+                >
+                  <span>Upcoming asset value</span>
+                  <strong>Rs {upcomingAssetValue.toFixed(2)}</strong>
                 </button>
               </div>
               <div className="dashboard-actions">

@@ -111,13 +111,17 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /dashboard-panel/);
   assert.match(page, /dashboard-metric-grid/);
   assert.match(page, /dashboard-finance-grid/);
+  assert.match(page, /dashboard-asset-grid/);
   assert.match(page, /dashboard-actions/);
-  assert.match(page, /Phase 2/);
+  assert.match(page, /Phase 3/);
   assert.match(page, /Total debit/);
   assert.match(page, /Total credit/);
   assert.match(page, /Net balance/);
   assert.match(page, /Total sales/);
   assert.match(page, /Total expenses/);
+  assert.match(page, /Total asset value/);
+  assert.match(page, /Available asset value/);
+  assert.match(page, /Upcoming asset value/);
   assert.match(page, /menu-toggle/);
   assert.match(page, /menu-overlay/);
   assert.match(page, /workspace-nav-open/);
@@ -220,6 +224,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /netBalance/);
   assert.match(postgres, /totalSales/);
   assert.match(postgres, /totalExpenses/);
+  assert.match(postgres, /totalAssetValue/);
+  assert.match(postgres, /availableAssetValue/);
+  assert.match(postgres, /upcomingAssetValue/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
@@ -242,6 +249,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.dashboard-panel/);
   assert.match(globalsCss, /\.dashboard-metric-grid/);
   assert.match(globalsCss, /\.dashboard-finance-grid/);
+  assert.match(globalsCss, /\.dashboard-asset-grid/);
   assert.match(globalsCss, /\.dashboard-actions/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);
