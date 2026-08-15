@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 
 let pool: Pool | null = null;
 
@@ -20,6 +20,15 @@ export type OwnerProfile = {
   email: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type OwnerNotification = {
+  id: number;
+  ownerName: string;
+  tone: "success" | "error" | "info";
+  message: string;
+  isRead: boolean;
+  createdAt: string;
 };
 
 export type EntryStatus = "pending" | "accepted";
@@ -206,6 +215,24 @@ function mapOwnerProfile(row: {
   };
 }
 
+function mapOwnerNotification(row: {
+  id: string | number;
+  owner_name: string;
+  tone: "success" | "error" | "info";
+  message: string;
+  is_read: boolean;
+  created_at: Date;
+}): OwnerNotification {
+  return {
+    id: Number(row.id),
+    ownerName: row.owner_name,
+    tone: row.tone,
+    message: row.message,
+    isRead: row.is_read,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
 function mapBusinessEntry(row: {
   id: string | number;
   entry_type: string;
@@ -239,6 +266,47 @@ function mapBusinessEntry(row: {
     approvedBy: row.approved_by || [],
     createdAt: row.created_at.toISOString(),
   };
+}
+
+async function createOwnerNotification(
+  queryable: Pool | PoolClient,
+  ownerName: string,
+  message: string,
+  tone: OwnerNotification["tone"] = "info",
+) {
+  if (!ownerName || !message) {
+    return;
+  }
+
+  await queryable.query(
+    `
+      insert into owner_notifications (owner_name, tone, message)
+      values ($1, $2, $3)
+      on conflict do nothing
+    `,
+    [ownerName, tone, message],
+  );
+}
+
+async function createOtherOwnerNotifications(
+  queryable: Pool | PoolClient,
+  actorName: string,
+  message: string,
+  tone: OwnerNotification["tone"] = "info",
+) {
+  if (!actorName || !message) {
+    return;
+  }
+
+  await queryable.query(
+    `
+      insert into owner_notifications (owner_name, tone, message)
+      select name, $2, $3
+      from owners
+      where name <> $1
+    `,
+    [actorName, tone, message],
+  );
 }
 
 function mapEquipmentItem(row: {
@@ -429,6 +497,20 @@ export async function initializeDatabase() {
         action text not null,
         created_at timestamptz not null default now()
       )
+    `);
+    await client.query(`
+      create table if not exists owner_notifications (
+        id bigserial primary key,
+        owner_name text not null references owners(name) on delete cascade,
+        tone text not null default 'info' check (tone in ('success', 'error', 'info')),
+        message text not null,
+        is_read boolean not null default false,
+        created_at timestamptz not null default now()
+      )
+    `);
+    await client.query(`
+      create index if not exists owner_notifications_owner_created_idx
+      on owner_notifications (owner_name, created_at desc)
     `);
     await client.query(`
       create table if not exists business_entries (
@@ -763,6 +845,47 @@ export async function recoverOwnerPin(
   return { name: owner.name };
 }
 
+export async function listOwnerNotifications(
+  ownerName: string,
+): Promise<OwnerNotification[]> {
+  if (!ownerName) {
+    return [];
+  }
+
+  const result = await getPool().query<{
+    id: string;
+    owner_name: string;
+    tone: "success" | "error" | "info";
+    message: string;
+    is_read: boolean;
+    created_at: Date;
+  }>(
+    `
+      select id, owner_name, tone, message, is_read, created_at
+      from owner_notifications
+      where owner_name = $1
+      order by created_at desc
+      limit 30
+    `,
+    [ownerName],
+  );
+
+  return result.rows.map(mapOwnerNotification);
+}
+
+export async function clearOwnerNotifications(ownerName: string) {
+  if (!ownerName) {
+    return { cleared: 0 };
+  }
+
+  const result = await getPool().query(
+    "delete from owner_notifications where owner_name = $1",
+    [ownerName],
+  );
+
+  return { cleared: result.rowCount || 0 };
+}
+
 export async function listBusinessEntries(): Promise<BusinessEntriesData> {
   const result = await getPool().query<{
     id: string;
@@ -873,6 +996,11 @@ export async function createBusinessEntry(entry: {
     "insert into app_events (owner_name, action) values ($1, $2)",
     [entry.createdBy, `Submitted ${entry.entryType} entry for approval`],
   );
+  await createOtherOwnerNotifications(
+    getPool(),
+    entry.createdBy,
+    `${entry.createdBy} submitted a ${entry.entryType} record for approval.`,
+  );
 
   return { id: entryId, status: "pending" as const, approvalCount: 1 };
 }
@@ -889,13 +1017,22 @@ export async function approveBusinessEntry(entryId: number, ownerName: string) {
 
     const entry = await client.query<{
       id: string;
+      entry_type: string;
+      category: string;
+      created_by: string;
       status: EntryStatus;
     }>(
-      "select id, status from business_entries where id = $1 for update",
+      `
+        select id, entry_type, category, created_by, status
+        from business_entries
+        where id = $1
+        for update
+      `,
       [entryId],
     );
+    const activeEntry = entry.rows[0];
 
-    if (!entry.rows[0] || entry.rows[0].status === "accepted") {
+    if (!activeEntry || activeEntry.status === "accepted") {
       await client.query("rollback");
       return null;
     }
@@ -931,6 +1068,22 @@ export async function approveBusinessEntry(entryId: number, ownerName: string) {
       "insert into app_events (owner_name, action) values ($1, $2)",
       [ownerName, `Approved entry ${entryId}`],
     );
+    if (ownerName !== activeEntry.created_by) {
+      await createOwnerNotification(
+        client,
+        activeEntry.created_by,
+        `${ownerName} accepted your ${activeEntry.entry_type} record.`,
+        status === "accepted" ? "success" : "info",
+      );
+    }
+    if (status === "accepted") {
+      await createOtherOwnerNotifications(
+        client,
+        ownerName,
+        `${activeEntry.category} record was accepted and saved.`,
+        "success",
+      );
+    }
     await client.query("commit");
 
     return { id: entryId, status, approvalCount };
@@ -1204,6 +1357,11 @@ export async function createEquipmentAddRequest(item: {
     "insert into app_events (owner_name, action) values ($1, $2)",
     [item.createdBy, `Submitted ${item.status} equipment for approval`],
   );
+  await createOtherOwnerNotifications(
+    getPool(),
+    item.createdBy,
+    `${item.createdBy} requested approval to add ${item.name}.`,
+  );
 
   return { id: requestId, status: "pending" as const, approvalCount: 1 };
 }
@@ -1321,6 +1479,22 @@ export async function approveEquipmentAddRequest(
       "insert into app_events (owner_name, action) values ($1, $2)",
       [ownerName, `Approved equipment addition ${requestId}`],
     );
+    if (ownerName !== item.created_by) {
+      await createOwnerNotification(
+        client,
+        item.created_by,
+        `${ownerName} accepted your equipment request for ${item.name}.`,
+        status === "accepted" ? "success" : "info",
+      );
+    }
+    if (status === "accepted") {
+      await createOtherOwnerNotifications(
+        client,
+        ownerName,
+        `${item.name} was approved and added to equipment.`,
+        "success",
+      );
+    }
     await client.query("commit");
 
     return { id: requestId, equipmentId, status, approvalCount };
@@ -1383,6 +1557,11 @@ export async function requestEquipmentDeletion(
         [equipmentId, item.name, ownerName],
       );
       requestId = Number(createdRequest.rows[0].id);
+      await createOtherOwnerNotifications(
+        client,
+        ownerName,
+        `${ownerName} requested approval to remove ${item.name}.`,
+      );
     }
 
     await client.query(
@@ -1419,6 +1598,14 @@ export async function requestEquipmentDeletion(
       "insert into app_events (owner_name, action) values ($1, $2)",
       [ownerName, `Approved equipment deletion ${equipmentId}`],
     );
+    if (status === "deleted") {
+      await createOtherOwnerNotifications(
+        client,
+        ownerName,
+        `${item.name} was approved for removal and deleted from equipment.`,
+        "success",
+      );
+    }
     await client.query("commit");
 
     return { id: requestId, equipmentId, status, approvalCount };

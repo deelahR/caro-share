@@ -29,8 +29,9 @@ type DatabaseStatus = {
 
 type Notification = {
   id: number;
-  tone: "success" | "error";
+  tone: "success" | "error" | "info";
   message: string;
+  isRead?: boolean;
   createdAt: string;
 };
 
@@ -153,6 +154,21 @@ function readImageFile(file: File) {
   });
 }
 
+function formatNotificationTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function Home() {
   const [activeOwner, setActiveOwner] = useState("");
   const [activeSection, setActiveSection] = useState<AppSection>("entries");
@@ -259,6 +275,34 @@ export default function Home() {
 
     setEquipmentData(payload);
   }, [showNotification]);
+
+  const loadNotifications = useCallback(
+    async (ownerName: string) => {
+      const response = await fetch(
+        `/api/notifications?owner=${encodeURIComponent(ownerName)}`,
+      );
+      const payload = (await response.json()) as {
+        notifications?: Notification[];
+        error?: string;
+      };
+
+      if (!response.ok || !payload.notifications) {
+        showNotification(
+          "error",
+          payload.error || "Notifications could not be loaded.",
+        );
+        return;
+      }
+
+      setNotifications(
+        payload.notifications.map((notification) => ({
+          ...notification,
+          createdAt: formatNotificationTime(notification.createdAt),
+        })),
+      );
+    },
+    [showNotification],
+  );
 
   async function loginOwner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -426,6 +470,7 @@ export default function Home() {
       setSelectedEntryType("expense");
       setSelectedCategory("");
       await loadEntries();
+      await loadNotifications(activeOwner);
     } finally {
       setIsSavingEntry(false);
     }
@@ -478,6 +523,7 @@ export default function Home() {
       } else {
         await loadEntries();
       }
+      await loadNotifications(activeOwner);
 
       showNotification(
         "success",
@@ -530,6 +576,7 @@ export default function Home() {
       setEquipmentImage("");
       setEquipmentDraft(null);
       await loadEquipment();
+      await loadNotifications(activeOwner);
     } finally {
       setIsSavingEquipment(false);
     }
@@ -586,6 +633,7 @@ export default function Home() {
       } else {
         await loadEquipment();
       }
+      await loadNotifications(activeOwner);
 
       showNotification(
         "success",
@@ -626,6 +674,7 @@ export default function Home() {
       } else {
         await loadEquipment();
       }
+      await loadNotifications(activeOwner);
 
       showNotification(
         "success",
@@ -657,9 +706,32 @@ export default function Home() {
       const response = await fetch("/api/database", { method: "POST" });
       const status = (await response.json()) as DatabaseStatus;
       setDatabaseStatus(status);
+      if (activeOwner) {
+        await loadNotifications(activeOwner);
+      }
     } finally {
       setIsCheckingDatabase(false);
     }
+  }
+
+  async function clearNotifications() {
+    if (!activeOwner) {
+      setNotifications([]);
+      return;
+    }
+
+    const response = await fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ownerName: activeOwner }),
+    });
+
+    if (!response.ok) {
+      showNotification("error", "Notifications could not be cleared.");
+      return;
+    }
+
+    setNotifications([]);
   }
 
   function logoutOwner() {
@@ -681,9 +753,10 @@ export default function Home() {
         void loadOwnerProfile(activeOwner);
         void loadEntries();
         void loadEquipment();
+        void loadNotifications(activeOwner);
       });
     }
-  }, [activeOwner, loadEntries, loadEquipment]);
+  }, [activeOwner, loadEntries, loadEquipment, loadNotifications]);
 
   const categories = entriesData?.categories ?? {};
   const selectedCategories = categories[selectedEntryType] ?? [];
@@ -864,7 +937,9 @@ export default function Home() {
             <strong>Notifications</strong>
             {notifications.length > 0 && (
               <button
-                onClick={() => setNotifications([])}
+                onClick={() => {
+                  void clearNotifications();
+                }}
                 type="button"
               >
                 Clear all

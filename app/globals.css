@@ -1017,6 +1017,10 @@ h2 {
   border-left-color: var(--red);
 }
 
+.notification-item-info {
+  border-left-color: var(--blue);
+}
+
 .notification-item div {
   display: grid;
   gap: 4px;

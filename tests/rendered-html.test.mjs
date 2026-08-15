@@ -56,6 +56,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     entriesRoute,
     entriesApproveRoute,
     equipmentRoute,
+    notificationsRoute,
     recoverPinRoute,
     profileRoute,
     globalsCss,
@@ -71,6 +72,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     readFile(new URL("../app/api/entries/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/entries/approve/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/equipment/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/notifications/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/recover-pin/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/owners/profile/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -110,6 +112,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /bell-button/);
   assert.match(page, /notification-panel/);
   assert.match(page, /Clear all/);
+  assert.match(page, /loadNotifications/);
+  assert.match(page, /clearNotifications/);
+  assert.match(page, /\/api\/notifications/);
   assert.match(page, /Recover PIN/);
   assert.match(page, /Add record for approval/);
   assert.match(page, /Approval requests/);
@@ -155,6 +160,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(equipmentRoute, /listEquipment/);
   assert.match(equipmentRoute, /requestEquipmentDeletion/);
   assert.match(equipmentRoute, /DELETE/);
+  assert.match(notificationsRoute, /listOwnerNotifications/);
+  assert.match(notificationsRoute, /clearOwnerNotifications/);
+  assert.match(notificationsRoute, /DELETE/);
   assert.match(recoverPinRoute, /recoverOwnerPin/);
   assert.match(profileRoute, /getOwnerProfile/);
   assert.match(profileRoute, /updateOwnerProfile/);
@@ -182,6 +190,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /equipment_add_approvals/);
   assert.match(postgres, /equipment_delete_requests/);
   assert.match(postgres, /equipment_delete_approvals/);
+  assert.match(postgres, /owner_notifications/);
+  assert.match(postgres, /createOwnerNotification/);
+  assert.match(postgres, /createOtherOwnerNotifications/);
+  assert.match(postgres, /listOwnerNotifications/);
+  assert.match(postgres, /clearOwnerNotifications/);
   assert.match(postgres, /image_data/);
   assert.match(postgres, /listEquipment/);
   assert.match(postgres, /createEquipmentAddRequest/);
