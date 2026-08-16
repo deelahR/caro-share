@@ -508,6 +508,19 @@ export default function Home() {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
+    const existingEquipmentId = readText(form, "existingEquipmentId");
+    const selectedEquipment = approvedEquipment.find(
+      (item) => String(item.id) === existingEquipmentId,
+    );
+    const note = readText(form, "note");
+    const equipmentNote = selectedEquipment
+      ? [
+          `Equipment: ${selectedEquipment.name}`,
+          `Status: ${selectedEquipment.status}`,
+          `Qty: ${selectedEquipment.quantity}`,
+          `Value: Rs ${selectedEquipment.estimatedCost.toFixed(2)}`,
+        ].join(", ")
+      : "";
     setIsSavingEntry(true);
 
     try {
@@ -522,7 +535,7 @@ export default function Home() {
           ownerName: readText(form, "ownerName"),
           createdBy: activeOwner,
           entryDate: readText(form, "entryDate"),
-          note: readText(form, "note"),
+          note: [note, equipmentNote].filter(Boolean).join(" | "),
         }),
       });
       const payload = (await response.json()) as { error?: string };
@@ -2041,15 +2054,31 @@ export default function Home() {
                   <input name="note" placeholder="Optional details" />
                 </label>
                 {isEquipmentContribution && (
-                  <div className="linked-module-panel">
-                    <div>
-                      <strong>Equipment contribution selected</strong>
+                  <>
+                    <label className="entry-note existing-equipment-field">
+                      Choose from equipment list
+                      <select name="existingEquipmentId">
+                        <option value="">No existing equipment selected</option>
+                        {(equipmentData?.available ?? []).map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} - Qty {item.quantity} - Rs{" "}
+                            {item.estimatedCost.toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
                       <span>
-                        Add a new equipment item or check the available
-                        equipment list before submitting this record.
+                        Select an approved available equipment item if this
+                        contribution is for something already in the register.
                       </span>
-                    </div>
-                    <div className="linked-module-actions">
+                    </label>
+                    <div className="linked-module-panel">
+                      <div>
+                        <strong>Equipment contribution selected</strong>
+                        <span>
+                          Choose equipment above, or create a new equipment
+                          request if it is not in the list yet.
+                        </span>
+                      </div>
                       <button
                         onClick={(event) =>
                           linkEquipmentContribution(event.currentTarget.form)
@@ -2058,14 +2087,8 @@ export default function Home() {
                       >
                         Add equipment details
                       </button>
-                      <button
-                        onClick={() => openShortcut("equipment", "list")}
-                        type="button"
-                      >
-                        Available equipment list
-                      </button>
                     </div>
-                  </div>
+                  </>
                 )}
                 <button disabled={isSavingEntry} type="submit">
                   Submit record

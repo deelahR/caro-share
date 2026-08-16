@@ -748,6 +748,17 @@ h2 {
   grid-column: span 2;
 }
 
+.existing-equipment-field {
+  grid-column: 1 / -1;
+}
+
+.existing-equipment-field span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  text-transform: none;
+}
+
 .linked-module-panel {
   grid-column: 1 / -1;
   display: flex;
@@ -786,17 +797,6 @@ h2 {
 
 .linked-module-panel-full {
   justify-content: start;
-}
-
-.linked-module-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.linked-module-actions button {
-  min-width: 190px;
 }
 
 .image-field {
@@ -1655,13 +1655,7 @@ h2 {
     display: grid;
   }
 
-  .linked-module-actions {
-    display: grid;
-    justify-content: stretch;
-  }
-
-  .linked-module-panel button,
-  .linked-module-actions button {
+  .linked-module-panel button {
     width: 100%;
   }
 
