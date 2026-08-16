@@ -239,6 +239,8 @@ export default function Home() {
   const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
   const [selectedEntryType, setSelectedEntryType] = useState("expense");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedExistingEquipmentId, setSelectedExistingEquipmentId] =
+    useState("");
   const [equipmentImage, setEquipmentImage] = useState("");
   const [equipmentSearch, setEquipmentSearch] = useState("");
   const [summaryOwnerFilter, setSummaryOwnerFilter] = useState("");
@@ -552,6 +554,7 @@ export default function Home() {
       event.currentTarget.reset();
       setSelectedEntryType("expense");
       setSelectedCategory("");
+      setSelectedExistingEquipmentId("");
       await loadBusinessSummary();
       await loadEntries();
       await loadNotifications();
@@ -1989,6 +1992,7 @@ export default function Home() {
                     onChange={(event) => {
                       setSelectedEntryType(event.target.value);
                       setSelectedCategory("");
+                      setSelectedExistingEquipmentId("");
                     }}
                     value={selectedEntryType}
                   >
@@ -2003,7 +2007,10 @@ export default function Home() {
                   Category
                   <select
                     name="category"
-                    onChange={(event) => setSelectedCategory(event.target.value)}
+                    onChange={(event) => {
+                      setSelectedCategory(event.target.value);
+                      setSelectedExistingEquipmentId("");
+                    }}
                     required
                     value={selectedCategory}
                   >
@@ -2055,22 +2062,56 @@ export default function Home() {
                 </label>
                 {isEquipmentContribution && (
                   <>
-                    <label className="entry-note existing-equipment-field">
-                      Choose from equipment list
-                      <select name="existingEquipmentId">
-                        <option value="">No existing equipment selected</option>
-                        {(equipmentData?.available ?? []).map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} - Qty {item.quantity} - Rs{" "}
-                            {item.estimatedCost.toFixed(2)}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="entry-note existing-equipment-field">
+                      <strong>Choose from equipment list</strong>
                       <span>
-                        Select an approved available equipment item if this
+                        Select one approved available equipment item if this
                         contribution is for something already in the register.
                       </span>
-                    </label>
+                      {(equipmentData?.available ?? []).length ? (
+                        <div className="equipment-choice-list">
+                          {(equipmentData?.available ?? []).map((item) => (
+                            <label
+                              className={`equipment-choice-card ${
+                                selectedExistingEquipmentId === String(item.id)
+                                  ? "equipment-choice-selected"
+                                  : ""
+                              }`}
+                              key={item.id}
+                            >
+                              <input
+                                checked={
+                                  selectedExistingEquipmentId === String(item.id)
+                                }
+                                name="existingEquipmentId"
+                                onChange={() =>
+                                  setSelectedExistingEquipmentId(String(item.id))
+                                }
+                                type="radio"
+                                value={item.id}
+                              />
+                              <span className="status-pill">Available</span>
+                              <b>{item.name}</b>
+                              <small>
+                                Qty {item.quantity} | Rs{" "}
+                                {item.estimatedCost.toFixed(2)}
+                              </small>
+                              <small>Responsible: {item.ownerName}</small>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <p>No available equipment saved yet.</p>
+                      )}
+                      {selectedExistingEquipmentId && (
+                        <button
+                          onClick={() => setSelectedExistingEquipmentId("")}
+                          type="button"
+                        >
+                          Clear equipment selection
+                        </button>
+                      )}
+                    </div>
                     <div className="linked-module-panel">
                       <div>
                         <strong>Equipment contribution selected</strong>

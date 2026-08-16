@@ -160,7 +160,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /Add equipment details/);
   assert.match(page, /Choose from equipment list/);
   assert.match(page, /existingEquipmentId/);
-  assert.match(page, /No existing equipment selected/);
+  assert.match(page, /equipment-choice-list/);
+  assert.match(page, /equipment-choice-card/);
+  assert.match(page, /equipment-choice-selected/);
+  assert.match(page, /Clear equipment selection/);
   assert.match(page, /selectedEquipment/);
   assert.match(page, /Linked from equipment contribution/);
   assert.match(page, /Owner & System/);
@@ -299,6 +302,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.owner-summary-grid/);
   assert.match(globalsCss, /\.dashboard-actions/);
   assert.match(globalsCss, /\.existing-equipment-field/);
+  assert.match(globalsCss, /\.equipment-choice-list/);
+  assert.match(globalsCss, /\.equipment-choice-card/);
+  assert.match(globalsCss, /\.equipment-choice-selected/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);
   assert.doesNotMatch(globalsCss, /module-overview/);
