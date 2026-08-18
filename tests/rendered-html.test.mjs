@@ -289,11 +289,12 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /@media \(max-width: 760px\)/);
   assert.match(globalsCss, /overflow-x: hidden/);
   assert.match(globalsCss, /--site-background-image: url\("\/agribro-background\.png"\)/);
-  assert.match(globalsCss, /rgba\(238, 241, 237, 0\.96\)/);
-  assert.match(globalsCss, /rgba\(255, 255, 255, 0\.98\)/);
+  assert.match(globalsCss, /rgba\(238, 241, 237, 0\.985\)/);
+  assert.match(globalsCss, /\.login-panel\s*{[\s\S]*background: #ffffff/);
+  assert.match(globalsCss, /\.auth-card\s*{[\s\S]*background: #ffffff/);
+  assert.match(globalsCss, /\.workspace-header,[\s\S]*\.content-panel\s*{[\s\S]*background: #ffffff/);
   assert.match(globalsCss, /var\(--site-background-image\) center \/ cover fixed no-repeat/);
   assert.match(globalsCss, /background-attachment: scroll/);
-  assert.match(globalsCss, /backdrop-filter: blur\(10px\)/);
   assert.match(globalsCss, /\.workspace-shell\s*{[\s\S]*grid-template-columns: 230px minmax\(0, 1fr\)/);
   assert.match(globalsCss, /\.workspace-nav\s*{[\s\S]*position: sticky/);
   assert.match(globalsCss, /\.workspace-shell > \.content-panel/);
