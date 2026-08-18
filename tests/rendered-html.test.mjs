@@ -232,6 +232,9 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /cleanupConfirmation/);
   assert.match(page, /isCleaningDatabase/);
   assert.match(page, /Business data cleaned/);
+  assert.match(page, /activeOwner === "Anoup"/);
+  assert.match(page, /Only Anoup can use this control/);
+  assert.match(page, /database-cleanup-locked/);
   assert.doesNotMatch(
     page,
     /pin:\s*"1111"|splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
@@ -265,6 +268,8 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(databaseRoute, /getSessionOwner/);
   assert.match(databaseRoute, /confirmation !== "CLEAN"/);
   assert.match(databaseRoute, /Owner session is required/);
+  assert.match(databaseRoute, /ownerName !== "Anoup"/);
+  assert.match(databaseRoute, /Only Anoup can clean business data/);
   assert.match(summaryRoute, /getBusinessSummary/);
   assert.match(summaryRoute, /ensureDatabaseInitialized/);
   assert.match(postgres, /totalDebit/);
@@ -319,6 +324,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.equipment-choice-card/);
   assert.match(globalsCss, /\.equipment-choice-selected/);
   assert.match(globalsCss, /\.database-cleanup-panel/);
+  assert.match(globalsCss, /\.database-cleanup-locked/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);
   assert.doesNotMatch(globalsCss, /module-overview/);

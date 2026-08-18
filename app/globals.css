@@ -752,6 +752,10 @@ h2 {
   min-width: 170px;
 }
 
+.database-cleanup-locked {
+  grid-template-columns: 1fr;
+}
+
 .login-form {
   display: grid;
   gap: 14px;

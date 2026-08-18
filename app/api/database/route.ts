@@ -42,6 +42,13 @@ export async function DELETE(request: Request) {
       );
     }
 
+    if (ownerName !== "Anoup") {
+      return Response.json(
+        { error: "Only Anoup can clean business data." },
+        { status: 403 },
+      );
+    }
+
     const payload = (await request.json().catch(() => ({}))) as {
       confirmation?: string;
     };

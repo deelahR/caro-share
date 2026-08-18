@@ -2758,39 +2758,52 @@ export default function Home() {
                   Initialize tables
                 </button>
               </div>
-              <div className="database-cleanup-panel">
-                <div>
-                  <h3>Start anew</h3>
-                  <p>
-                    Clean investment records, approvals, equipment,
-                    notifications, and app logs. Owner accounts stay saved.
-                  </p>
-                </div>
-                <label>
-                  Type CLEAN to confirm
-                  <input
-                    autoComplete="off"
-                    onChange={(event) =>
-                      setCleanupConfirmation(event.target.value.toUpperCase())
+              {activeOwner === "Anoup" ? (
+                <div className="database-cleanup-panel">
+                  <div>
+                    <h3>Start anew</h3>
+                    <p>
+                      Clean investment records, approvals, equipment,
+                      notifications, and app logs. Owner accounts stay saved.
+                      Only Anoup can use this control.
+                    </p>
+                  </div>
+                  <label>
+                    Type CLEAN to confirm
+                    <input
+                      autoComplete="off"
+                      onChange={(event) =>
+                        setCleanupConfirmation(event.target.value.toUpperCase())
+                      }
+                      placeholder="CLEAN"
+                      value={cleanupConfirmation}
+                    />
+                  </label>
+                  <button
+                    className="danger-button"
+                    disabled={
+                      isCleaningDatabase ||
+                      cleanupConfirmation !== "CLEAN" ||
+                      !databaseStatus?.configured ||
+                      !databaseStatus?.connected
                     }
-                    placeholder="CLEAN"
-                    value={cleanupConfirmation}
-                  />
-                </label>
-                <button
-                  className="danger-button"
-                  disabled={
-                    isCleaningDatabase ||
-                    cleanupConfirmation !== "CLEAN" ||
-                    !databaseStatus?.configured ||
-                    !databaseStatus?.connected
-                  }
-                  onClick={cleanBusinessData}
-                  type="button"
-                >
-                  {isCleaningDatabase ? "Cleaning..." : "Clean business data"}
-                </button>
-              </div>
+                    onClick={cleanBusinessData}
+                    type="button"
+                  >
+                    {isCleaningDatabase ? "Cleaning..." : "Clean business data"}
+                  </button>
+                </div>
+              ) : (
+                <div className="database-cleanup-panel database-cleanup-locked">
+                  <div>
+                    <h3>Start anew</h3>
+                    <p>
+                      Business data cleanup is restricted. Only Anoup can clean
+                      records, approvals, equipment, notifications, and logs.
+                    </p>
+                  </div>
+                </div>
+              )}
             </section>
           )}
         </section>
