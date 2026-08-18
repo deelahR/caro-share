@@ -38,9 +38,9 @@ body {
   background:
     linear-gradient(
       180deg,
-      rgba(238, 241, 237, 0.98) 0%,
-      rgba(238, 241, 237, 0.985) 48%,
-      rgba(238, 241, 237, 0.99) 100%
+      rgba(238, 241, 237, 0.4) 0%,
+      rgba(238, 241, 237, 0.4) 48%,
+      rgba(238, 241, 237, 0.4) 100%
     ),
     var(--site-background-image) center / cover fixed no-repeat;
   color: var(--foreground);

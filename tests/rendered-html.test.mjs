@@ -289,7 +289,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /@media \(max-width: 760px\)/);
   assert.match(globalsCss, /overflow-x: hidden/);
   assert.match(globalsCss, /--site-background-image: url\("\/agribro-background\.png"\)/);
-  assert.match(globalsCss, /rgba\(238, 241, 237, 0\.985\)/);
+  assert.match(globalsCss, /rgba\(238, 241, 237, 0\.4\)/);
   assert.match(globalsCss, /\.login-panel\s*{[\s\S]*background: #ffffff/);
   assert.match(globalsCss, /\.auth-card\s*{[\s\S]*background: #ffffff/);
   assert.match(globalsCss, /\.workspace-header,[\s\S]*\.content-panel\s*{[\s\S]*background: #ffffff/);
