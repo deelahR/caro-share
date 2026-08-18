@@ -212,6 +212,9 @@ function getPool() {
   if (!pool) {
     pool = new Pool({
       connectionString,
+      max: 8,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 5_000,
       ssl: connectionString.includes("localhost")
         ? false
         : { rejectUnauthorized: false },
@@ -626,6 +629,68 @@ export async function initializeDatabase() {
       )
     `);
     await client.query(`
+      create index if not exists owners_lower_name_idx
+      on owners (lower(name))
+    `);
+    await client.query(`
+      create index if not exists app_events_owner_created_idx
+      on app_events (owner_name, created_at desc)
+    `);
+    await client.query(`
+      create index if not exists business_entries_status_created_idx
+      on business_entries (status, created_at desc)
+    `);
+    await client.query(`
+      create index if not exists business_entries_accepted_owner_type_date_idx
+      on business_entries (owner_name, entry_type, entry_date)
+      where status = 'accepted'
+    `);
+    await client.query(`
+      create index if not exists business_entries_pending_created_idx
+      on business_entries (created_at desc)
+      where status = 'pending'
+    `);
+    await client.query(`
+      create index if not exists entry_approvals_entry_created_idx
+      on entry_approvals (entry_id, created_at)
+    `);
+    await client.query(`
+      create index if not exists entry_approvals_owner_created_idx
+      on entry_approvals (owner_name, created_at desc)
+    `);
+    await client.query(`
+      create index if not exists equipment_items_status_created_idx
+      on equipment_items (status, created_at desc)
+    `);
+    await client.query(`
+      create index if not exists equipment_items_owner_status_date_idx
+      on equipment_items (owner_name, status, target_date)
+    `);
+    await client.query(`
+      create index if not exists equipment_add_requests_status_created_idx
+      on equipment_add_requests (status, created_at desc)
+    `);
+    await client.query(`
+      create index if not exists equipment_add_approvals_request_created_idx
+      on equipment_add_approvals (request_id, created_at)
+    `);
+    await client.query(`
+      create index if not exists equipment_delete_requests_status_created_idx
+      on equipment_delete_requests (status, created_at desc)
+    `);
+    await client.query(`
+      create index if not exists equipment_delete_requests_equipment_status_idx
+      on equipment_delete_requests (equipment_id, status)
+    `);
+    await client.query(`
+      create index if not exists equipment_delete_approvals_request_created_idx
+      on equipment_delete_approvals (request_id, created_at)
+    `);
+    await client.query(`
+      create index if not exists owner_notifications_unread_idx
+      on owner_notifications (owner_name, is_read, created_at desc)
+    `);
+    await client.query(`
       insert into entry_approvals (entry_id, owner_name)
       select id, created_by
       from business_entries
@@ -964,47 +1029,55 @@ export async function getBusinessSummary(): Promise<BusinessSummary> {
     equipment_add_requests: string;
     equipment_delete_requests: string;
   }>(`
+    with entry_stats as (
+      select
+        count(*) filter (where status = 'pending') as pending_entries,
+        count(*) filter (where status = 'accepted') as accepted_entries,
+        coalesce(sum(amount) filter (where status = 'accepted'), 0) as accepted_amount,
+        coalesce(sum(amount) filter (
+          where status = 'accepted' and entry_type = 'expense'
+        ), 0) as total_debit,
+        coalesce(sum(amount) filter (
+          where status = 'accepted' and entry_type in ('investment', 'sale')
+        ), 0) as total_credit,
+        coalesce(sum(amount) filter (
+          where status = 'accepted' and entry_type = 'sale'
+        ), 0) as total_sales,
+        coalesce(sum(amount) filter (
+          where status = 'accepted' and entry_type = 'expense'
+        ), 0) as total_expenses
+      from business_entries
+    ),
+    equipment_stats as (
+      select
+        coalesce(sum(estimated_cost), 0) as total_asset_value,
+        coalesce(sum(estimated_cost) filter (where status = 'available'), 0) as available_asset_value,
+        coalesce(sum(estimated_cost) filter (where status = 'upcoming'), 0) as upcoming_asset_value,
+        count(*) as equipment_items
+      from equipment_items
+    ),
+    approval_stats as (
+      select
+        (select count(*) from equipment_add_requests where status = 'pending') as equipment_add_requests,
+        (select count(*) from equipment_delete_requests where status = 'pending') as equipment_delete_requests
+    )
     select
-      (select count(*) from business_entries where status = 'pending') as pending_entries,
-      (select count(*) from business_entries where status = 'accepted') as accepted_entries,
-      (select coalesce(sum(amount), 0) from business_entries where status = 'accepted') as accepted_amount,
-      (
-        select coalesce(sum(amount), 0)
-        from business_entries
-        where status = 'accepted' and entry_type = 'expense'
-      ) as total_debit,
-      (
-        select coalesce(sum(amount), 0)
-        from business_entries
-        where status = 'accepted' and entry_type in ('investment', 'sale')
-      ) as total_credit,
-      (
-        select coalesce(sum(amount), 0)
-        from business_entries
-        where status = 'accepted' and entry_type = 'sale'
-      ) as total_sales,
-      (
-        select coalesce(sum(amount), 0)
-        from business_entries
-        where status = 'accepted' and entry_type = 'expense'
-      ) as total_expenses,
-      (
-        select coalesce(sum(estimated_cost), 0)
-        from equipment_items
-      ) as total_asset_value,
-      (
-        select coalesce(sum(estimated_cost), 0)
-        from equipment_items
-        where status = 'available'
-      ) as available_asset_value,
-      (
-        select coalesce(sum(estimated_cost), 0)
-        from equipment_items
-        where status = 'upcoming'
-      ) as upcoming_asset_value,
-      (select count(*) from equipment_items) as equipment_items,
-      (select count(*) from equipment_add_requests where status = 'pending') as equipment_add_requests,
-      (select count(*) from equipment_delete_requests where status = 'pending') as equipment_delete_requests
+      entry_stats.pending_entries,
+      entry_stats.accepted_entries,
+      entry_stats.accepted_amount,
+      entry_stats.total_debit,
+      entry_stats.total_credit,
+      entry_stats.total_sales,
+      entry_stats.total_expenses,
+      equipment_stats.total_asset_value,
+      equipment_stats.available_asset_value,
+      equipment_stats.upcoming_asset_value,
+      equipment_stats.equipment_items,
+      approval_stats.equipment_add_requests,
+      approval_stats.equipment_delete_requests
+    from entry_stats
+    cross join equipment_stats
+    cross join approval_stats
   `);
   const ownerSummaryResult = await getPool().query<{
     owner_name: string;
