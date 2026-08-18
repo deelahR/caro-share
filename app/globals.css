@@ -724,6 +724,34 @@ h2 {
   gap: 10px;
 }
 
+.database-cleanup-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) auto;
+  gap: 12px;
+  align-items: end;
+  border: 1px solid #f1c5c5;
+  border-radius: 8px;
+  background: #fffafa;
+  padding: 14px;
+}
+
+.database-cleanup-panel h3 {
+  margin: 0 0 4px;
+  color: var(--red);
+  font-size: 1rem;
+}
+
+.database-cleanup-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.database-cleanup-panel button {
+  min-width: 170px;
+}
+
 .login-form {
   display: grid;
   gap: 14px;
@@ -1695,6 +1723,7 @@ h2 {
 
   .equipment-manager,
   .database-facts,
+  .database-cleanup-panel,
   .profile-form,
   .compact-form,
   .entry-form {
@@ -1778,11 +1807,13 @@ h2 {
 
   .approval-actions button,
   .database-actions button,
+  .database-cleanup-panel button,
   .image-preview button {
     width: 100%;
   }
 
   .database-actions,
+  .database-cleanup-panel,
   .image-preview {
     display: grid;
   }

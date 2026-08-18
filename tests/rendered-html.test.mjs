@@ -58,6 +58,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     entriesRoute,
     entriesApproveRoute,
     equipmentRoute,
+    databaseRoute,
     notificationsRoute,
     summaryRoute,
     recoverPinRoute,
@@ -77,6 +78,7 @@ test("removes starter preview code and documents Render deployment", async () =>
     readFile(new URL("../app/api/entries/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/entries/approve/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/equipment/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/database/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/notifications/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/summary/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/recover-pin/route.ts", import.meta.url), "utf8"),
@@ -224,6 +226,12 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(page, /2 owner approvals/);
   assert.match(page, /Database system/);
   assert.match(page, /\/api\/database/);
+  assert.match(page, /Start anew/);
+  assert.match(page, /Type CLEAN to confirm/);
+  assert.match(page, /Clean business data/);
+  assert.match(page, /cleanupConfirmation/);
+  assert.match(page, /isCleaningDatabase/);
+  assert.match(page, /Business data cleaned/);
   assert.doesNotMatch(
     page,
     /pin:\s*"1111"|splitMode|startingData|Total investment|Add expense|Add sale|Tomato early batch|Leafy greens|Seeds and trays|North plot|South plot/,
@@ -252,6 +260,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(notificationsRoute, /clearOwnerNotifications/);
   assert.match(notificationsRoute, /PATCH/);
   assert.match(notificationsRoute, /DELETE/);
+  assert.match(databaseRoute, /cleanBusinessData/);
+  assert.match(databaseRoute, /ensureDatabaseInitialized/);
+  assert.match(databaseRoute, /getSessionOwner/);
+  assert.match(databaseRoute, /confirmation !== "CLEAN"/);
+  assert.match(databaseRoute, /Owner session is required/);
   assert.match(summaryRoute, /getBusinessSummary/);
   assert.match(summaryRoute, /ensureDatabaseInitialized/);
   assert.match(postgres, /totalDebit/);
@@ -305,6 +318,7 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(globalsCss, /\.equipment-choice-list/);
   assert.match(globalsCss, /\.equipment-choice-card/);
   assert.match(globalsCss, /\.equipment-choice-selected/);
+  assert.match(globalsCss, /\.database-cleanup-panel/);
   assert.match(globalsCss, /\.notification-actions/);
   assert.match(globalsCss, /\.metric-grid button/);
   assert.doesNotMatch(globalsCss, /module-overview/);
@@ -329,6 +343,11 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(postgres, /initializationPromise/);
   assert.match(postgres, /ensureDatabaseInitialized/);
   assert.match(postgres, /getBusinessSummary/);
+  assert.match(postgres, /BusinessDataCleanup/);
+  assert.match(postgres, /delete from business_entries/);
+  assert.match(postgres, /delete from equipment_items/);
+  assert.match(postgres, /delete from owner_notifications/);
+  assert.match(postgres, /delete from app_events/);
   assert.match(postgres, /max: 8/);
   assert.match(postgres, /idleTimeoutMillis: 30_000/);
   assert.match(postgres, /connectionTimeoutMillis: 5_000/);

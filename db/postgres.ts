@@ -38,6 +38,18 @@ export type BusinessSummary = {
   ownerSummaries: OwnerSummary[];
 };
 
+export type BusinessDataCleanup = {
+  businessEntries: number;
+  entryApprovals: number;
+  equipmentItems: number;
+  equipmentAddRequests: number;
+  equipmentAddApprovals: number;
+  equipmentDeleteRequests: number;
+  equipmentDeleteApprovals: number;
+  notifications: number;
+  appEvents: number;
+};
+
 export type OwnerProfile = {
   name: string;
   displayName: string;
@@ -1011,6 +1023,51 @@ export async function clearOwnerNotifications(ownerName: string) {
   );
 
   return { cleared: result.rowCount || 0 };
+}
+
+export async function cleanBusinessData(): Promise<BusinessDataCleanup> {
+  const client = await getPool().connect();
+
+  try {
+    await client.query("begin");
+
+    const equipmentDeleteApprovals = await client.query(
+      "delete from equipment_delete_approvals",
+    );
+    const equipmentDeleteRequests = await client.query(
+      "delete from equipment_delete_requests",
+    );
+    const equipmentAddApprovals = await client.query(
+      "delete from equipment_add_approvals",
+    );
+    const equipmentAddRequests = await client.query(
+      "delete from equipment_add_requests",
+    );
+    const entryApprovals = await client.query("delete from entry_approvals");
+    const businessEntries = await client.query("delete from business_entries");
+    const equipmentItems = await client.query("delete from equipment_items");
+    const notifications = await client.query("delete from owner_notifications");
+    const appEvents = await client.query("delete from app_events");
+
+    await client.query("commit");
+
+    return {
+      businessEntries: businessEntries.rowCount || 0,
+      entryApprovals: entryApprovals.rowCount || 0,
+      equipmentItems: equipmentItems.rowCount || 0,
+      equipmentAddRequests: equipmentAddRequests.rowCount || 0,
+      equipmentAddApprovals: equipmentAddApprovals.rowCount || 0,
+      equipmentDeleteRequests: equipmentDeleteRequests.rowCount || 0,
+      equipmentDeleteApprovals: equipmentDeleteApprovals.rowCount || 0,
+      notifications: notifications.rowCount || 0,
+      appEvents: appEvents.rowCount || 0,
+    };
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getBusinessSummary(): Promise<BusinessSummary> {

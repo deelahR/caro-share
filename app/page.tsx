@@ -225,6 +225,8 @@ export default function Home() {
     null,
   );
   const [isCheckingDatabase, setIsCheckingDatabase] = useState(false);
+  const [isCleaningDatabase, setIsCleaningDatabase] = useState(false);
+  const [cleanupConfirmation, setCleanupConfirmation] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
@@ -802,6 +804,56 @@ export default function Home() {
       }
     } finally {
       setIsCheckingDatabase(false);
+    }
+  }
+
+  async function cleanBusinessData() {
+    if (cleanupConfirmation !== "CLEAN") {
+      showNotification("error", "Type CLEAN before cleaning business data.");
+      return;
+    }
+
+    setIsCleaningDatabase(true);
+
+    try {
+      const response = await fetch("/api/database", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: cleanupConfirmation }),
+      });
+      const payload = (await response.json()) as {
+        cleanup?: Record<string, number>;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.cleanup) {
+        showNotification("error", payload.error || "Business data was not cleaned.");
+        return;
+      }
+
+      setCleanupConfirmation("");
+      setEntriesData((current) =>
+        current
+          ? { ...current, pending: [], accepted: [] }
+          : current,
+      );
+      setEquipmentData((current) =>
+        current
+          ? {
+              ...current,
+              available: [],
+              upcoming: [],
+              additionRequests: [],
+              deletionRequests: [],
+            }
+          : current,
+      );
+      setNotifications([]);
+      await loadBusinessSummary();
+      await refreshDatabaseStatus();
+      showNotification("success", "Business data cleaned. Owner accounts stayed saved.");
+    } finally {
+      setIsCleaningDatabase(false);
     }
   }
 
@@ -2704,6 +2756,39 @@ export default function Home() {
                   type="button"
                 >
                   Initialize tables
+                </button>
+              </div>
+              <div className="database-cleanup-panel">
+                <div>
+                  <h3>Start anew</h3>
+                  <p>
+                    Clean investment records, approvals, equipment,
+                    notifications, and app logs. Owner accounts stay saved.
+                  </p>
+                </div>
+                <label>
+                  Type CLEAN to confirm
+                  <input
+                    autoComplete="off"
+                    onChange={(event) =>
+                      setCleanupConfirmation(event.target.value.toUpperCase())
+                    }
+                    placeholder="CLEAN"
+                    value={cleanupConfirmation}
+                  />
+                </label>
+                <button
+                  className="danger-button"
+                  disabled={
+                    isCleaningDatabase ||
+                    cleanupConfirmation !== "CLEAN" ||
+                    !databaseStatus?.configured ||
+                    !databaseStatus?.connected
+                  }
+                  onClick={cleanBusinessData}
+                  type="button"
+                >
+                  {isCleaningDatabase ? "Cleaning..." : "Clean business data"}
                 </button>
               </div>
             </section>
