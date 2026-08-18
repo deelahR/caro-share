@@ -288,6 +288,10 @@ test("removes starter preview code and documents Render deployment", async () =>
   assert.match(profileRoute, /updateOwnerProfile/);
   assert.match(globalsCss, /@media \(max-width: 760px\)/);
   assert.match(globalsCss, /overflow-x: hidden/);
+  assert.match(globalsCss, /--site-background-image: url\("\/agribro-background\.png"\)/);
+  assert.match(globalsCss, /var\(--site-background-image\) center \/ cover fixed no-repeat/);
+  assert.match(globalsCss, /background-attachment: scroll/);
+  assert.match(globalsCss, /backdrop-filter: blur\(10px\)/);
   assert.match(globalsCss, /\.workspace-shell\s*{[\s\S]*grid-template-columns: 230px minmax\(0, 1fr\)/);
   assert.match(globalsCss, /\.workspace-nav\s*{[\s\S]*position: sticky/);
   assert.match(globalsCss, /\.workspace-shell > \.content-panel/);
@@ -404,4 +408,5 @@ test("removes starter preview code and documents Render deployment", async () =>
   await assert.rejects(
     access(new URL("app/_sites-preview/preview.css", projectRoot)),
   );
+  await access(new URL("public/agribro-background.png", projectRoot));
 });
